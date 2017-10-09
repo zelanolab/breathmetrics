@@ -31,7 +31,7 @@ if ~isempty(bm.exhale_onsets)
     i=i+1;
 end
 
-if sum(bm.respiratory_pause_onsets)>0
+if ~ isempty(bm.respiratory_pause_onsets)
     params{i}=bm.respiratory_pause_onsets(bm.respiratory_pause_onsets>0);
     param_labels{i} = 'Respiratory Pauses';
     i=i+1;
@@ -66,6 +66,7 @@ if ~isempty(params)
 end
 
 legend(handles,legend_text);
+keyboard;
 
 
 if annotate==1

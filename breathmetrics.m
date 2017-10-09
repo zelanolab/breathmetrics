@@ -20,7 +20,6 @@ classdef breathmetrics < handle
         exhale_volumes
         respiratory_pause_onsets
         respiratory_pause_lengths
-        has_respiratory_pause
         secondary_features
         resp_phase
         erp_matrix
@@ -31,13 +30,13 @@ classdef breathmetrics < handle
     end
    
     methods
-        % constructor
+        %%% constructor
         function bm = breathmetrics(resp, srate, data_type)
             if nargin < 3
                 data_type = 'human';
                 disp('WARNING: Data type not specified.');
                 disp('Please use input ''human'' or ''rodent'' as the third input arguement to specify');
-                disp('Proceeding assuming that it is human spirometer data.')
+                disp('Proceeding assuming that this is human data.')
             end
             
             if srate>5000 || srate<20
@@ -176,7 +175,7 @@ classdef breathmetrics < handle
             bm.trough_expiratory_flows = this_resp(putative_troughs);
         end
         
-        function bm = find_zeros(bm, verbose )
+        function bm = find_onsets_and_pauses(bm, verbose )
             % estimate zero crosses in data
             if nargin < 2
                 verbose = 0;
@@ -184,25 +183,11 @@ classdef breathmetrics < handle
             this_resp = which_resp(bm, verbose);
             
             % new method
-            [these_inhale_onsets, these_exhale_onsets] = find_breath_onsets(this_resp, bm.inhale_peaks, bm.exhale_troughs);
+            [these_inhale_onsets, these_exhale_onsets, these_inhale_pause_onsets] = find_respiratory_pauses_and_onsets(this_resp, bm.inhale_peaks, bm.exhale_troughs);
             bm.inhale_onsets = these_inhale_onsets;
             bm.exhale_onsets = these_exhale_onsets;
-        end
-        
-        function bm = find_pauses(bm, verbose)
-            
-            if strcmp(bm.data_type, 'rodent')
-                disp('WARNING: respiratory pause estimations are not reliable for rodent data. Interpretation of this metric is not advised');
-            end
-            % estimate zero crosses in data
-            if nargin < 2
-                verbose = 0;
-            end
-            this_resp = which_resp(bm, verbose);
-            [pause_onsets, pause_lengths] = find_respiratory_pauses(this_resp, bm.inhale_onsets, bm.exhale_troughs);
-            bm.respiratory_pause_onsets = pause_onsets;
-            bm.respiratory_pause_lengths = pause_lengths;
-            bm.has_respiratory_pause = pause_onsets > 0;
+            bm.respiratory_pause_onsets = these_inhale_pause_onsets;
+            bm.respiratory_pause_lengths = bm.inhale_onsets - bm.respiratory_pause_onsets;
         end
             
         function bm = find_inhale_and_exhale_volumes(bm, verbose )
@@ -253,11 +238,8 @@ classdef breathmetrics < handle
             
             bm.correct_resp_to_baseline(baseline_correction_method, z_score, verbose);
             bm.find_extrema(verbose);
-            bm.find_zeros(verbose);
+            bm.find_onsets_and_pauses(verbose);
             bm.find_inhale_and_exhale_volumes(verbose);
-            if strcmp(bm.data_type,'human')
-                bm.find_pauses(verbose);
-            end
             bm.get_secondary_features(verbose);
         end
         

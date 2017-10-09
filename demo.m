@@ -1,7 +1,7 @@
 %% Demo for The Respiratory Signal Processing Toolbox
 
 % Simulate data for demo
-sim_srate = 20; % handles weird sampling rates
+sim_srate = 1000; % handles weird sampling rates
 n_samples = 200 * sim_srate; % 200 seconds of data
 breathing_rate = .25; % breathe once every 4 seconds
 avg_amp = 0.02; % amplitude of inhales and exhales
@@ -17,14 +17,14 @@ sim_resp = simulate_resp_data(n_samples, sim_srate, breathing_rate, avg_amp, amp
 
 data_type = 'human';
 % initialize class
-bm = breathmetrics(sim_resp, sim_srate, data_type);
+%bm = breathmetrics(sim_resp, sim_srate, data_type);
 
 
 % usage on real data
-%respdat = load('./sample_data.mat');
-%resp_trace = respdat.resp;
-%srate = respdat.srate;
-%bm = breathmetrics(resp_trace, srate, data_type);
+respdat = load('./sample_data.mat');
+resp_trace = respdat.resp;
+srate = respdat.srate;
+bm = breathmetrics(resp_trace, srate, data_type);
 
 
 % print out steps as they go. Set to 0 to silence.
