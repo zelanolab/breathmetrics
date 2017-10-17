@@ -66,8 +66,6 @@ if ~isempty(params)
 end
 
 legend(handles,legend_text);
-keyboard;
-
 
 if annotate==1
     if ~isempty(bm.inhale_volumes)

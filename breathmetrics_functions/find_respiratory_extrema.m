@@ -7,7 +7,8 @@ function [corrected_peaks, corrected_troughs] = find_respiratory_extrema( resp, 
 
 if nargin < 4
     srate_adjust = srate/1000;
-    sw_sizes = [floor(300*srate_adjust),floor(700*srate_adjust),floor(1000*srate_adjust),floor(5000*srate_adjust)];
+    sw_sizes = [floor(100*srate_adjust),floor(300*srate_adjust),floor(700*srate_adjust),floor(1000*srate_adjust),floor(5000*srate_adjust)];
+    %sw_sizes = [floor(300*srate_adjust),floor(700*srate_adjust),floor(1000*srate_adjust),floor(5000*srate_adjust)];
     %disp(strcat('using sw_sizes:',mat2str(sw_sizes)))
 end
 

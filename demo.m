@@ -25,7 +25,7 @@ respdat = load('./sample_data.mat');
 resp_trace = respdat.resp;
 srate = respdat.srate;
 bm = breathmetrics(resp_trace, srate, data_type);
-
+bm.estimate_all_features();
 
 % print out steps as they go. Set to 0 to silence.
 verbose=1; 

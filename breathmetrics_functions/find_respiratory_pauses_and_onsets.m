@@ -73,8 +73,8 @@ for this_breath=1:length(mypeaks)-1
     custom_bins=linspace(min(inhale_window),max(inhale_window),n_bins);
     [amp_vals, window_bins] = hist(inhale_window, custom_bins);
     [~,mode_bin] = max(amp_vals);
-    
-    if mode_bin < lower_thresh || mode_bin > upper_thresh 
+    max_bin_ratio = amp_vals(mode_bin)/mean(amp_vals);
+    if mode_bin < lower_thresh || mode_bin > upper_thresh || max_bin_ratio < 10
        % data does not cluster in the middle, indicating no respiratory
        % pause. So just use baseline crossing as inhale onset
        this_inhale_thresh = simple_zero_cross;

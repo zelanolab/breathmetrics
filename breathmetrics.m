@@ -68,7 +68,7 @@ classdef breathmetrics < handle
             
             % time is like fieldtrip. All events are indexed by point in
             % time vector.
-            bm.time = (1:length(resp))*bm.srate;
+            bm.time = (1:length(resp))/bm.srate;
         end
         
         %%% Preprocessing Methods
@@ -295,17 +295,18 @@ classdef breathmetrics < handle
 
             erpmat = create_erp_mat( this_resp, event_array, pre_samples, post_samples );
             srate_step=1000/bm.srate;
-            bm.trial_events = event_array;
-            bm.erp_matrix = erpmat;
             
             % if sampling rate is a float, x axis can mismatch
             temp_x_axis = -pre:srate_step:post+srate_step;
-            
-            if length(bm.erp_x_axis) ~= size(bm.erp_matrix,2)
-                bm.erp_x_axis = temp_x_axis(1:size(bm.erp_matrix,2));
-            else
+
+            if length(temp_x_axis) > size(erpmat,2)
+                bm.erp_x_axis = temp_x_axis(1:size(erpmat,2));
+            elseif length(temp_x_axis) < size(erpmat,2)
+                erpmat = erpmat(:,1:length(temp_x_axis));
                 bm.erp_x_axis = temp_x_axis;
             end
+            bm.trial_events = event_array;
+            bm.erp_matrix = erpmat;
         end
         
         function bm = resampled_erp(bm, event_array, pre_pct, post_pct, resample_size)
