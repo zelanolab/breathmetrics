@@ -32,7 +32,7 @@ avg_e_vol = mean(valid_exhale_volumes);
 
 % average exhale volume must always be negative. tidal volume is total air
 % displaced by inhale and exhale
-avg_tv = avg_i_vol - avg_e_vol;
+avg_tv = avg_i_vol + avg_e_vol;
 
 % minute volume is the product of respiration rate and tidal volume
 mv = br*avg_tv;
@@ -46,12 +46,12 @@ cv_inhale_durations = std(inhale_durations)/mean(inhale_durations);
 
 avg_exhale_time = ibi-avg_inhale_time;
 
-% coefficient of variation of breathing rate describes consistancy and variability of 
-% breathing
+% coefficient of variation of breathing rate describes variability in time
+% between breaths
 cv_br = std(diff(bm.inhale_peaks))/mean(diff(bm.inhale_peaks));
 
-% fano factor of breath size describes consistancy and variability of
-% breath sizes
+% coefficient of variation in breath size describes variability of breath
+% sizes
 cv_tv = std(valid_inhale_volumes)/median(valid_inhale_volumes);
 
 % assigning values for output
@@ -91,13 +91,21 @@ valueSet={
 
 % only include respiratory pauses for humans
 if strcmp(bm.data_type, 'human')
-    pct_respiratory_pauses = sum(bm.respiratory_pause_onsets > 0 ) / length(bm.respiratory_pause_onsets);
-    avg_pause_length = mean(bm.respiratory_pause_lengths(bm.respiratory_pause_lengths>0))/bm.srate;
+    pct_inhale_pauses = sum(bm.inhale_pause_onsets > 0 ) / length(bm.inhale_pause_onsets);
+    avg_inhale_pause_length = mean(bm.inhale_pause_lengths(bm.inhale_pause_lengths>0))/bm.srate;
     
-    keySet{end+1} = 'Percent Respiratory Pauses';
-    keySet{end+1} = 'Average Respiratory Pause Length';
-    valueSet{end+1} = pct_respiratory_pauses;
-    valueSet{end+1} = avg_pause_length;
+    keySet{end+1} = 'Percent of Inhales With Pauses';
+    keySet{end+1} = 'Average Length of Inhale Pause';
+    valueSet{end+1} = pct_inhale_pauses;
+    valueSet{end+1} = avg_inhale_pause_length;
+    
+    pct_exhale_pauses = sum(bm.exhale_pause_onsets > 0 ) / length(bm.exhale_pause_onsets);
+    avg_exhale_pause_length = mean(bm.exhale_pause_lengths(bm.exhale_pause_lengths>0))/bm.srate;
+    
+    keySet{end+1} = 'Percent of Exhales With Pauses';
+    keySet{end+1} = 'Average Length of Exhale Pause';
+    valueSet{end+1} = pct_exhale_pauses;
+    valueSet{end+1} = avg_exhale_pause_length;
 end
     
 respstats= containers.Map(keySet,valueSet);

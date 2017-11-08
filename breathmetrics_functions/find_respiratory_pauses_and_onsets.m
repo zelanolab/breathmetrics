@@ -1,4 +1,4 @@
-function [ inhale_onsets, exhale_onsets, inhale_pause_onsets ] = find_respiratory_pauses_and_onsets( resp, mypeaks, mytroughs )
+function [ inhale_onsets, exhale_onsets, inhale_pause_onsets, exhale_pause_onsets ] = find_respiratory_pauses_and_onsets( resp, mypeaks, mytroughs )
 %FIND_RESPIRATORY_PAUSES_AND_ONSETS finds each breath onset and respiratory
 %pause in the data, given the peaks and troughs
 
@@ -15,11 +15,20 @@ function [ inhale_onsets, exhale_onsets, inhale_pause_onsets ] = find_respirator
 inhale_onsets = zeros(1,length(mypeaks));
 exhale_onsets = zeros(1,length(mypeaks));
 
+% inhale pause onsets happen after inhales but before exhales
+% exhale pause onsets happen after exhales but before inhales 
 inhale_pause_onsets = zeros(1,length(mypeaks));
+exhale_pause_onsets = zeros(1,length(mypeaks));
+inhale_pause_onsets(:)=nan;
+exhale_pause_onsets(:)=nan;
+
 
 % free parameter. 100 bins works well for my data. Will probably break if
 % sampling rate is too slow.
 n_bins=100;
+
+% free parameter for sensitivity of calling something a pause or not.
+max_bin_thresh = 5;
 
 % thresholds the mode bin (cycle zero cross) must fall between.
 % fast breathing sometimes looks like a square wave so the mode is at the
@@ -63,7 +72,6 @@ else
     inhale_onsets(1,1) = first_zc_bound;
 end
 
-
 % cycle through each peak-peak window of respiration data
 for this_breath=1:length(mypeaks)-1
     
@@ -74,7 +82,9 @@ for this_breath=1:length(mypeaks)-1
     [amp_vals, window_bins] = hist(inhale_window, custom_bins);
     [~,mode_bin] = max(amp_vals);
     max_bin_ratio = amp_vals(mode_bin)/mean(amp_vals);
-    if mode_bin < lower_thresh || mode_bin > upper_thresh || max_bin_ratio < 10
+    is_an_exhale_pause = ~(mode_bin < lower_thresh || mode_bin > upper_thresh || max_bin_ratio < max_bin_thresh);
+    
+    if ~is_an_exhale_pause
        % data does not cluster in the middle, indicating no respiratory
        % pause. So just use baseline crossing as inhale onset
        this_inhale_thresh = simple_zero_cross;
@@ -84,7 +94,7 @@ for this_breath=1:length(mypeaks)-1
        inhale_onset = find( possible_inhale_inds == 0, 1, 'last' );
        % this is the inhale onset for the next peak so add 1 to keep indexing
        % consistant
-       inhale_pause_onsets(1, this_breath + 1) = nan;
+       exhale_pause_onsets(1, this_breath) = nan;
        inhale_onsets(1, this_breath + 1) = mytroughs( this_breath ) + inhale_onset;
         
     else
@@ -113,10 +123,10 @@ for this_breath=1:length(mypeaks)-1
             end
         end
             
-        putative_pause_inds = find(inhale_window>min_pause_range  & inhale_window<max_pause_range);
+        putative_pause_inds = find(inhale_window > min_pause_range  & inhale_window<max_pause_range);
         pause_onset = putative_pause_inds(1)-1;
         inhale_onset = putative_pause_inds(end)+1;
-        inhale_pause_onsets(1, this_breath + 1) = mytroughs( this_breath ) + pause_onset;
+        exhale_pause_onsets(1, this_breath) = mytroughs( this_breath ) + pause_onset;
         inhale_onsets(1, this_breath + 1) = mytroughs( this_breath ) + inhale_onset;
     end
     
@@ -125,14 +135,56 @@ for this_breath=1:length(mypeaks)-1
     % troughs always follow peaks
     exhale_window = resp(mypeaks(this_breath):mytroughs(this_breath));
     custom_bins=linspace(min(exhale_window),max(exhale_window),n_bins);
-    [vals,bins] = hist(exhale_window,custom_bins);
-    zc_thresh = simple_zero_cross + (bins(end)-bins(end-1));
+    [amp_vals, window_bins] = hist(exhale_window, custom_bins);
+    [~,mode_bin] = max(amp_vals);
+    max_bin_ratio = amp_vals(mode_bin)/mean(amp_vals);
     
-    % these will always have a value
-    possible_exhale_inds = exhale_window > zc_thresh;
-    % find first value that crosses.
-    exhale_onset = find( possible_exhale_inds == 0, 1, 'first' );
-    exhale_onsets(1, this_breath) = mypeaks( this_breath ) + exhale_onset;
+    is_an_inhale_pause = ~(mode_bin < lower_thresh || mode_bin > upper_thresh || max_bin_ratio < max_bin_thresh);
+    
+    if ~is_an_inhale_pause
+       % data does not cluster in the middle, indicating no respiratory
+       % pause. So just use baseline crossing as inhale onset
+       this_exhale_thresh = simple_zero_cross;
+       % points where the trace crosses zero
+       possible_exhale_inds = exhale_window > this_exhale_thresh;
+       % find last point in half-cycle below threshold
+       exhale_onset = find( possible_exhale_inds == 1, 1, 'last' );
+       % this is the exhale onset for the next trough
+       
+       inhale_pause_onsets(1, this_breath) = nan;
+       exhale_onsets(1, this_breath) = mypeaks( this_breath ) + exhale_onset;
+    else
+        % add bins to find good range of variance for this respiratory pause
+        min_pause_range = window_bins(mode_bin);
+        max_pause_range = window_bins(mode_bin+1);
+        max_bin_total = amp_vals(mode_bin);
+        % percent of amplitudes added by including a bin compared to max bin
+        binning_thresh = .25; 
+        
+        % add bins in positive direction
+        for additional_bin = 1:5
+            this_bin = mode_bin-additional_bin;
+            this_many_vals_added = amp_vals(this_bin);
+            if this_many_vals_added > max_bin_total * binning_thresh
+                min_pause_range = window_bins(this_bin);
+            end
+        end
+        
+        % add bins in negative direction
+        for additional_bin = 1:5
+            this_bin = mode_bin+additional_bin;
+            this_many_vals_added = amp_vals(this_bin);
+            if this_many_vals_added > max_bin_total * binning_thresh
+                max_pause_range = window_bins(this_bin);
+            end
+        end
+            
+        putative_pause_inds = find(exhale_window > min_pause_range  & exhale_window < max_pause_range);
+        pause_onset = putative_pause_inds(1)-1;
+        exhale_onset = putative_pause_inds(end)+1;
+        inhale_pause_onsets(1, this_breath) = mypeaks( this_breath ) + pause_onset;
+        exhale_onsets(1, this_breath) = mypeaks( this_breath ) + exhale_onset;
+    end 
 end
 
 % last exhale onset is also special because it's not in a peak-peak cycle
@@ -158,4 +210,3 @@ else
     % about half a cycle of respiration.
     exhale_onsets(1,end) = last_zc_bound;
 end
-

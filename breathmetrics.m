@@ -18,8 +18,10 @@ classdef breathmetrics < handle
         exhale_onsets
         inhale_volumes
         exhale_volumes
-        respiratory_pause_onsets
-        respiratory_pause_lengths
+        inhale_pause_onsets
+        inhale_pause_lengths
+        exhale_pause_onsets
+        exhale_pause_lengths
         secondary_features
         resp_phase
         erp_matrix
@@ -183,11 +185,13 @@ classdef breathmetrics < handle
             this_resp = which_resp(bm, verbose);
             
             % new method
-            [these_inhale_onsets, these_exhale_onsets, these_inhale_pause_onsets] = find_respiratory_pauses_and_onsets(this_resp, bm.inhale_peaks, bm.exhale_troughs);
+            [these_inhale_onsets, these_exhale_onsets, these_inhale_pause_onsets, these_exhale_pause_onsets] = find_respiratory_pauses_and_onsets(this_resp, bm.inhale_peaks, bm.exhale_troughs);
             bm.inhale_onsets = these_inhale_onsets;
             bm.exhale_onsets = these_exhale_onsets;
-            bm.respiratory_pause_onsets = these_inhale_pause_onsets;
-            bm.respiratory_pause_lengths = bm.inhale_onsets - bm.respiratory_pause_onsets;
+            bm.inhale_pause_onsets = these_inhale_pause_onsets;
+            bm.exhale_pause_onsets = these_exhale_pause_onsets;
+            bm.inhale_pause_lengths = bm.inhale_pause_onsets - bm.inhale_onsets;
+            bm.exhale_pause_lengths = bm.exhale_pause_onsets - bm.exhale_onsets;
         end
             
         function bm = find_inhale_and_exhale_volumes(bm, verbose )

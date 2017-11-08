@@ -1,8 +1,6 @@
 function [fig] = plot_respiratory_features( bm, annotate)
 % Plots respiration as well as any respiratory features that have been
 % estimated
-% annotate is a cell of features you wish to plot. Options are:
-% 'extrema', 'onsets','maxflow','volumes', and 'pauses'
 
 params = {};
 param_labels = {};
@@ -140,7 +138,7 @@ if ~isempty(annotate)
         end
     end
     
-    if sum(strcmp(annotate,'pauses'))>0
+    if sum(strcmp(annotate,'onsets'))>0
         if ~isempty(bm.inhale_pause_onsets) && ~isempty(bm.exhale_pause_onsets)
             % remove nan's for breaths where there was no pause
             real_inhale_pause_onsets = bm.inhale_pause_onsets(bm.inhale_pause_onsets>0);
@@ -148,14 +146,14 @@ if ~isempty(annotate)
             
             if ~isempty(real_inhale_pause_onsets)
                 for i=1:length(real_inhale_pause_onsets)
-                    inhale_pause_annotations{i} = sprintf('Inhale pause at %.1f', bm.time(real_inhale_pause_onsets(i)));
+                    inhale_pause_annotations{i} = sprintf('Inhale pause at %.1f', bm.time(bm.inhale_pause_onsets(i)));
                 end
             else
                 disp('No inhale pauses detected');
             end
             if ~isempty(real_exhale_pause_onsets)
                 for e=1:length(real_exhale_pause_onsets)
-                    exhale_pause_annotations{e} = sprintf('Exhale pause at %.1f', bm.time(real_exhale_pause_onsets(e)));
+                    exhale_pause_annotations{e} = sprintf('Exhale pause at %.1f', bm.time(bm.exhale_pause_onsets(e)));
                 end
             else
                 disp('No exhale pauses detected');
@@ -163,7 +161,6 @@ if ~isempty(annotate)
         else
             disp('Respiratory pauses have not been calculated.')
         end
-    end
 end
 
 % plot annotations
@@ -187,14 +184,12 @@ end
 
 if ~isempty(inhale_pause_annotations)
     for i=1:length(real_inhale_pause_onsets)
-        text(x_axis(real_inhale_pause_onsets(i)),resp(real_inhale_pause_onsets(i)),inhale_pause_annotations{i});
+        text(x_axis(real_inhale_pause_onsets(i)),resp(real_inhale_pause_onsets(i)),inhale_onset_annotations{i});
     end
 end
 
 if ~isempty(exhale_pause_annotations)
-    for e=1:length(real_exhale_pause_onsets)
-        text(x_axis(real_inhale_pause_onsets(e)),resp(real_exhale_pause_onsets(e)),exhale_pause_annotations{e});
+    for e=1:length(real_inhale_pause_onsets)
+        text(x_axis(real_inhale_pause_onsets(i)),resp(real_inhale_pause_onsets(i)),inhale_onset_annotations{i});
     end
 end
-
-

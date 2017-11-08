@@ -20,13 +20,12 @@ end
 
 % last exhale is different because there is no following inhale
 exhale_window = resp(exhale_onsets(end):end);
-pre_putative_exhale_end = find(exhale_window>0,1,'first');
-
-if isempty(pre_putative_exhale_end)
+putative_exhale_end = find(exhale_window>0,1,'first');
+keyboard
+if isempty(putative_exhale_end)
     % volume cannot be calculated
     exhale_volumes(end)=nan;
 else
-    putative_exhale_end = pre_putative_exhale_end+exhale_onsets(end);
     exhale_integral = sum(abs(resp(exhale_onsets(end):putative_exhale_end)));
     high_check = exhale_integral < mean(exhale_volumes(1:end-1))+2*std(exhale_volumes(1:end-1));
     low_check = exhale_integral > mean(exhale_volumes(1:end-1))-2*std(exhale_volumes(1:end-1));
