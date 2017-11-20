@@ -22,7 +22,8 @@ end
 exhale_window = resp(exhale_onsets(end):end);
 pre_putative_exhale_end = find(exhale_window>0,1,'first');
 
-if isempty(pre_putative_exhale_end)
+% check that there is a real exhale end
+if isempty(pre_putative_exhale_end) || pre_putative_exhale_end<srate/2;
     % volume cannot be calculated
     exhale_volumes(end)=nan;
 else

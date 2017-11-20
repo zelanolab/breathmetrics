@@ -18,6 +18,8 @@ classdef breathmetrics < handle
         exhale_onsets
         inhale_volumes
         exhale_volumes
+        inhale_lengths
+        exhale_lengths
         inhale_pause_onsets
         inhale_pause_lengths
         exhale_pause_onsets
@@ -190,8 +192,15 @@ classdef breathmetrics < handle
             bm.exhale_onsets = these_exhale_onsets;
             bm.inhale_pause_onsets = these_inhale_pause_onsets;
             bm.exhale_pause_onsets = these_exhale_pause_onsets;
-            bm.inhale_pause_lengths = bm.inhale_pause_onsets - bm.inhale_onsets;
-            bm.exhale_pause_lengths = bm.exhale_pause_onsets - bm.exhale_onsets;
+            %bm.inhale_pause_lengths = (bm.inhale_pause_onsets - bm.inhale_onsets) ./ bm.srate;
+            %bm.exhale_pause_lengths = (bm.exhale_pause_onsets - bm.exhale_onsets) ./ bm.srate;
+            % calculate length of inhale and exhale where air is actually
+            % flowing
+            [these_inhale_lengths, these_exhale_lengths, these_inhale_pause_lengths, these_exhale_pause_lengths] = find_breath_lengths(bm);
+            bm.inhale_lengths = these_inhale_lengths;
+            bm.exhale_lengths = these_exhale_lengths;
+            bm.inhale_pause_lengths = these_inhale_pause_lengths;
+            bm.exhale_pause_lengths = these_exhale_pause_lengths;
         end
             
         function bm = find_inhale_and_exhale_volumes(bm, verbose )
@@ -281,23 +290,23 @@ classdef breathmetrics < handle
             bm.resp_phase = angle(hilbert(filtered_resp));
         end
         
-        function bm = erp( bm, event_array , pre, post)
-            % calculates an 'event related potential' of the respiratory
+        function bm = erp( bm, event_array , pre, post, verbose)
+            % calculates an event related potential of the respiratory
             % trace pre and post milliseconds before and after time points
             % in event_array.
             
-            this_resp = which_resp(bm);
-            if nargin<3
-                pre = bm.secondary_features('Average Inter-Breath Interval');
-                post = bm.secondary_features('Average Inter-Breath Interval');
+            if nargin<4
+                verbose=1;
             end
+            
+            this_resp = which_resp(bm);
             
             % convert pre and post from ms into samples
             to_real_ms = bm.srate/1000;
             pre_samples = round(pre*to_real_ms);
             post_samples = round(post*to_real_ms);
 
-            erpmat = create_erp_mat( this_resp, event_array, pre_samples, post_samples );
+            erpmat = create_erp_mat( this_resp, event_array, pre_samples, post_samples, verbose );
             srate_step=1000/bm.srate;
             
             % if sampling rate is a float, x axis can mismatch
@@ -313,12 +322,15 @@ classdef breathmetrics < handle
             bm.erp_matrix = erpmat;
         end
         
-        function bm = resampled_erp(bm, event_array, pre_pct, post_pct, resample_size)
+        function bm = resampled_erp(bm, event_array, pre_pct, post_pct, resample_size, verbose)
             % Calculates a 'event related potential' of the respiratory  
             % trace resampled by the average breathing rate. Helpful for
             % comparing events between traces with different breathing
             % rates.
             
+            if nargin < 6
+                verbose=1;
+            end
             if nargin < 5
                 % resample the erp window by this many points
                 resample_size=2000;
@@ -340,7 +352,7 @@ classdef breathmetrics < handle
             this_resp = which_resp(bm);
             
             % get times a full cycle before and after each event
-            normalized_erp = create_erp_mat(this_resp, event_array, rs_pre, rs_post);
+            normalized_erp = create_erp_mat(this_resp, event_array, rs_pre, rs_post, verbose);
             
             % resample this cycle into resample_size points
             resample_inds=linspace(1,rs_pre+rs_post+1,resample_size);

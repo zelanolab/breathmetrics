@@ -6,6 +6,7 @@ function respstats  = get_secondary_resp_features( bm, verbose )
 if nargin < 2
     verbose = 0;
 end
+
 if verbose == 1
     disp('Calculating secondary respiratory features')
 end
@@ -25,8 +26,8 @@ avg_max_inhale_flows = mean(valid_inhale_flows);
 avg_max_exhale_flows = mean(valid_exhale_flows);
 
 % exclude outlier breaths and calculate breath volumes
-valid_inhale_volumes = bm.inhale_volumes(bm.inhale_volumes>mean(bm.inhale_volumes) - 2 * std(bm.inhale_volumes) & bm.inhale_volumes< mean(bm.inhale_volumes) + 2 * std(bm.inhale_volumes));
-valid_exhale_volumes = bm.exhale_volumes(bm.exhale_volumes>mean(bm.exhale_volumes) - 2 * std(bm.exhale_volumes) & bm.exhale_volumes< mean(bm.exhale_volumes) + 2 * std(bm.exhale_volumes));
+valid_inhale_volumes = bm.inhale_volumes(bm.inhale_volumes>nanmean(bm.inhale_volumes) - 2 * std(bm.inhale_volumes) & bm.inhale_volumes< mean(bm.inhale_volumes) + 2 * std(bm.inhale_volumes));
+valid_exhale_volumes = bm.exhale_volumes(bm.exhale_volumes>nanmean(bm.exhale_volumes) - 2 * nanstd(bm.exhale_volumes) & bm.exhale_volumes< nanmean(bm.exhale_volumes) + 2 * nanstd(bm.exhale_volumes));
 avg_i_vol = mean(valid_inhale_volumes);
 avg_e_vol = mean(valid_exhale_volumes);
 
@@ -34,7 +35,7 @@ avg_e_vol = mean(valid_exhale_volumes);
 % displaced by inhale and exhale
 avg_tv = avg_i_vol + avg_e_vol;
 
-% minute volume is the product of respiration rate and tidal volume
+% minute ventilation is the product of respiration rate and tidal volume
 mv = br*avg_tv;
 
 % duty cycle is the percent of each breathing cycle that was spent inhaling
@@ -63,13 +64,13 @@ keySet= {
     'Average Inhale Volume';
     'Average Exhale Volume';
     'Average Tidal Volume';
-    'Minute Volume';
+    'Minute Ventilation';
     'Duty Cycle';
-    'Coefficient of variation of duty cycle';
+    'Coefficient of Variation of Duty Cycle';
     'Average Inhale Length';
     'Average Exhale Length';
-    'Coefficient of variation of Breathing Rate';
-    'Coefficient of variation of Breath Volumes';
+    'Coefficient of Variation of Breathing Rate';
+    'Coefficient of Variation of Breath Volumes';
     };
 
 valueSet={
@@ -92,7 +93,10 @@ valueSet={
 % only include respiratory pauses for humans
 if strcmp(bm.data_type, 'human')
     pct_inhale_pauses = sum(bm.inhale_pause_onsets > 0 ) / length(bm.inhale_pause_onsets);
-    avg_inhale_pause_length = mean(bm.inhale_pause_lengths(bm.inhale_pause_lengths>0))/bm.srate;
+    avg_inhale_pause_length = nanmean(bm.inhale_pause_lengths(bm.inhale_pause_lengths>0))/bm.srate;
+    if isempty(avg_inhale_pause_length)
+        avg_inhale_pause_length=0;
+    end
     
     keySet{end+1} = 'Percent of Inhales With Pauses';
     keySet{end+1} = 'Average Length of Inhale Pause';
@@ -100,7 +104,11 @@ if strcmp(bm.data_type, 'human')
     valueSet{end+1} = avg_inhale_pause_length;
     
     pct_exhale_pauses = sum(bm.exhale_pause_onsets > 0 ) / length(bm.exhale_pause_onsets);
-    avg_exhale_pause_length = mean(bm.exhale_pause_lengths(bm.exhale_pause_lengths>0))/bm.srate;
+    avg_exhale_pause_length = nanmean(bm.exhale_pause_lengths(bm.exhale_pause_lengths>0))/bm.srate;
+    
+    if isempty(avg_exhale_pause_length)
+        avg_exhale_pause_length=0;
+    end
     
     keySet{end+1} = 'Percent of Exhales With Pauses';
     keySet{end+1} = 'Average Length of Exhale Pause';

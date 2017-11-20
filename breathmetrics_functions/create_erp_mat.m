@@ -1,8 +1,10 @@
-function [erpmat] = create_erp_mat(data, events, pre_samples, post_samples)
+function [erpmat] = create_erp_mat(data, events, pre_samples, post_samples, verbose)
 
 % pre and post must both be positive.
 
-%erp_mat = zeros(length(events),length(x_axis)); % cant do in case zeros
+if nargin<5
+    verbose=1;
+end
 iter=1;
 for event = 1:length(events)
     event_inds = events(event)-pre_samples:events(event)+post_samples;
@@ -10,6 +12,8 @@ for event = 1:length(events)
         erpmat(iter,:) = data(1,event_inds);
         iter=iter+1;
     else
-        disp(sprintf('Event #%i (%i) is outside of ERP range', event, events(event)));
+        if verbose
+            disp(sprintf('Event #%i (%i) is outside of ERP range', event, events(event)));
+        end
     end
 end
