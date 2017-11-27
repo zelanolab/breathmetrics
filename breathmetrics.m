@@ -371,13 +371,16 @@ classdef breathmetrics < handle
         
         %%% Plotting methods
         
-        function fig = plot_features(bm, annotate)
+        function fig = plot_features(bm, annotate, size_data)
             % plot all respiratory features that have been calculated
             % property_list is string of features to plot 
+            if nargin<3
+                size_data=36;
+            end
             if nargin<2
                 annotate=0;
             end
-            fig = plot_respiratory_features(bm, annotate);
+            fig = plot_respiratory_features(bm, annotate, size_data);
         end
         
         function fig = plot_respiratory_erp(bm,simple_or_resampled)

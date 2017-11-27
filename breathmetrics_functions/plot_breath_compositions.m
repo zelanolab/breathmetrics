@@ -62,8 +62,7 @@ n_breaths = length(bm.inhale_onsets);
         
     elseif strcmp(plot_type,'raw')
         matsize = 1000;
-        max_breath_size = ceil(max(diff(bm.inhale_onsets))/srate);
-        time_vect = linspace(0,max_breath_size,matsize);
+        max_breath_size = ceil(max(diff(bm.inhale_onsets))/bm.srate);
         breath_mat = zeros(n_breaths,matsize);
         for b=1:n_breaths
             this_breath_comp = ones(1,matsize)*4;
@@ -106,11 +105,11 @@ n_breaths = length(bm.inhale_onsets);
         cb = colorbar('Location','NorthOutside'); 
         caxis([0,4]) 
         ticklabels = {'Inhales';'Inhale Pauses';'Exhales';'Exhale Pauses';''};
-        
         set(cb,'XTick',[0,1,2,3,4],'XTickLabel',ticklabels)
         
     elseif strcmp(plot_type,'line')
-        
+        % plots each breath as a function of how much time is spent in each
+        % phase
         mycolors = parula(n_breaths);
         for b=1:n_breaths
             ind=1;
