@@ -94,7 +94,7 @@ valueSet={
 if strcmp(bm.data_type, 'human')
     pct_inhale_pauses = sum(bm.inhale_pause_onsets > 0 ) / length(bm.inhale_pause_onsets);
     avg_inhale_pause_length = nanmean(bm.inhale_pause_lengths(bm.inhale_pause_lengths>0))/bm.srate;
-    if isempty(avg_inhale_pause_length)
+    if isempty(avg_inhale_pause_length) || isnan(avg_inhale_pause_length)
         avg_inhale_pause_length=0;
     end
     
@@ -106,7 +106,7 @@ if strcmp(bm.data_type, 'human')
     pct_exhale_pauses = sum(bm.exhale_pause_onsets > 0 ) / length(bm.exhale_pause_onsets);
     avg_exhale_pause_length = nanmean(bm.exhale_pause_lengths(bm.exhale_pause_lengths>0))/bm.srate;
     
-    if isempty(avg_exhale_pause_length)
+    if isempty(avg_exhale_pause_length)|| isnan(avg_exhale_pause_length)
         avg_exhale_pause_length=0;
     end
     

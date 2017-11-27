@@ -1,20 +1,31 @@
-function [inhale_volumes,exhale_volumes] = find_respiratory_volumes(resp, srate, inhale_onsets, exhale_onsets)
+function [inhale_volumes,exhale_volumes] = find_respiratory_volumes(resp, srate, inhale_onsets, exhale_onsets, inhale_pause_onsets, exhale_pause_onsets)
 
 % estimates the volume of air displaced in all inhales and exhales
 % requires zero crosses
 % assumes peaks always come first
 % assumes respiration has been baseline corrected;
 
+
 inhale_volumes = zeros(1,length(inhale_onsets));
 exhale_volumes = zeros(1,length(exhale_onsets));
 
 for bi = 1:length(exhale_onsets)
-    inhale_integral = sum(abs(resp(inhale_onsets(bi):exhale_onsets(bi)))); %11/6 added abs
+    if isnan(inhale_pause_onsets(bi))
+        this_inhale = inhale_onsets(bi):exhale_onsets(bi);
+    else
+        this_inhale = inhale_onsets(bi):inhale_pause_onsets(bi);
+    end
+    inhale_integral = sum(abs(resp(this_inhale)));
     inhale_volumes(1,bi)=inhale_integral;
 end
 
 for bi = 1:length(exhale_onsets)-1
-    exhale_integral = sum(abs(resp(exhale_onsets(bi):inhale_onsets(bi+1)))); %11/6 added abs
+    if isnan(exhale_pause_onsets(bi))
+        this_exhale = exhale_onsets(bi):inhale_onsets(bi+1);
+    else
+        this_exhale = exhale_onsets(bi):exhale_pause_onsets(bi);
+    end
+    exhale_integral = sum(abs(resp(this_exhale)));
     exhale_volumes(1,bi)=exhale_integral;
 end
 

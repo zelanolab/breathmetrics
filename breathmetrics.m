@@ -209,7 +209,7 @@ classdef breathmetrics < handle
                 verbose = 0;
             end
             this_resp = which_resp(bm, verbose);
-            [inhale_vols,exhale_vols] = find_respiratory_volumes( this_resp, bm.srate, bm.inhale_onsets, bm.exhale_onsets );
+            [inhale_vols,exhale_vols] = find_respiratory_volumes( this_resp, bm.srate, bm.inhale_onsets, bm.exhale_onsets, bm.inhale_pause_onsets, bm.exhale_pause_onsets );
             bm.inhale_volumes = inhale_vols;
             bm.exhale_volumes = exhale_vols;
         end
@@ -295,7 +295,7 @@ classdef breathmetrics < handle
             % trace pre and post milliseconds before and after time points
             % in event_array.
             
-            if nargin<4
+            if nargin<5
                 verbose=1;
             end
             
