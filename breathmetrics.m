@@ -44,7 +44,7 @@ classdef breathmetrics < handle
             end
             
             if srate>5000 || srate<20
-                disp('Sampling rates greater than 500 hz and less than 20 hz are not supported at this time. Please resample your data and try again');
+                disp('Sampling rates greater than 5000 hz and less than 20 hz are not supported at this time. Please resample your data and try again');
             end
             
             % flip data that is vertical instead of horizontal
@@ -273,11 +273,11 @@ classdef breathmetrics < handle
                 [~, pspec_max_ind] = max(Pxx);
                 filt_center = pspec_axis(pspec_max_ind); % breathing rate derived from power spectrum
                 if verbose == 1
-                    disp(sprintf('breathing rate and filtering center frequency calculated from power spectrum : %0.2g',filt_center));
+                    fprintf('breathing rate and filtering center frequency calculated from power spectrum : %0.2g /n',filt_center);
                 end
             end
         
-            if nargin < 2
+            if nargin < 2 
                 myfilter = designfilt('lowpassfir', 'PassbandFrequency', filt_center, 'StopbandFrequency',filt_center + 0.2);
             end
             
@@ -381,6 +381,19 @@ classdef breathmetrics < handle
                 annotate=0;
             end
             fig = plot_respiratory_features(bm, annotate, size_data);
+        end
+        
+        function fig = plot_compositions(bm,plot_type)
+            % plot compositions of breaths. Use 'raw', 'normalized', or
+            % 'line' as inputs
+            
+            if nargin < 2
+                disp('No plot type entered. Use ''raw'', ''normalized'', or ''line'' to specify');
+                disp('Proceeding using ''raw''');
+                plot_type='raw';
+            end
+            
+            fig = plot_breath_compositions(bm, plot_type);
         end
         
         function fig = plot_respiratory_erp(bm,simple_or_resampled)

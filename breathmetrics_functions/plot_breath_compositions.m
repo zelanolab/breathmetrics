@@ -50,6 +50,16 @@ n_breaths = length(bm.inhale_onsets);
         % image
         imagesc(breath_mat)
         xlim([0.5,matsize+0.5])
+        
+        % normalizing x ticks
+        xticks = linspace(1,matsize,11);
+        xtick_labels = {};
+        for i=1:length(xticks)
+            x_pct = xticks(i)/matsize;
+            xtick_labels{i} = sprintf('%i%%',round(x_pct*100));
+        end
+        
+        set(gca,'XTick',xticks,'XTickLabel',xtick_labels);
         ylim([0.5,n_breaths+0.5])
         xlabel('Proportion of Breathing Period')
         ylabel('Breath Number')
@@ -104,7 +114,7 @@ n_breaths = length(bm.inhale_onsets);
         % colorbar
         cb = colorbar('Location','NorthOutside'); 
         caxis([0,4]) 
-        ticklabels = {'Inhales';'Inhale Pauses';'Exhales';'Exhale Pauses';''};
+        ticklabels = {'Inhales';'Inhale Pauses';'Exhales';'Exhale Pauses';'Empty Space'};
         set(cb,'XTick',[0,1,2,3,4],'XTickLabel',ticklabels)
         
     elseif strcmp(plot_type,'line')

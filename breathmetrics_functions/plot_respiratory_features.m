@@ -3,7 +3,7 @@ function [fig] = plot_respiratory_features( bm, annotate, size_data)
 % estimated
 % annotate is a cell of features you wish to plot. Options are:
 % 'extrema', 'onsets','maxflow','volumes', and 'pauses'
-
+%keyboard
 if nargin < 3
     size_data = 36;
 end
@@ -197,7 +197,7 @@ end
 
 if ~isempty(exhale_pause_annotations)
     for e=1:length(real_exhale_pause_onsets)
-        text(x_axis(real_inhale_pause_onsets(e)),resp(real_exhale_pause_onsets(e)),exhale_pause_annotations{e});
+        text(x_axis(real_exhale_pause_onsets(e)),resp(real_exhale_pause_onsets(e)),exhale_pause_annotations{e});
     end
 end
 
