@@ -1,8 +1,12 @@
-function [fig] = plot_respiratory_features( bm, annotate)
+function [fig] = plot_respiratory_features( bm, annotate, size_data)
 % Plots respiration as well as any respiratory features that have been
 % estimated
 % annotate is a cell of features you wish to plot. Options are:
 % 'extrema', 'onsets','maxflow','volumes', and 'pauses'
+
+if nargin < 3
+    size_data = 36;
+end
 
 params = {};
 param_labels = {};
@@ -52,7 +56,6 @@ end
 resp = bm.which_resp();
 x_axis = bm.time;
 
-
 fig=figure; 
 hold all;
 
@@ -70,7 +73,7 @@ if ~isempty(params)
         %exclude nans for points where pauses don't happen or volumes can't
         %be calculated
         real_params = this_param(this_param>0);
-        h=scatter(x_axis(real_params),resp(real_params),'MarkerEdgeColor',mycolors(param_ind,:),'MarkerFaceColor',mycolors(param_ind,:));
+        h=scatter(x_axis(real_params),resp(real_params),'MarkerEdgeColor',mycolors(param_ind,:),'MarkerFaceColor',mycolors(param_ind,:),'SizeData',size_data);
         handles = [handles, h(1)];
         legend_text{param_ind+1}=param_labels{param_ind};
     end
@@ -78,14 +81,15 @@ end
 
 legend(handles,legend_text);
 
+% placeholders for annotations
+peak_annotations = {};
+trough_annotations = {};
+inhale_onset_annotations = {};
+exhale_onset_annotations = {};
+inhale_pause_annotations = {};
+exhale_pause_annotations = {};
+
 if ~isempty(annotate)
-    peak_annotations = {};
-    trough_annotations = {};
-    inhale_onset_annotations = {};
-    exhale_onset_annotations = {};
-    inhale_pause_annotations = {};
-    exhale_pause_annotations = {};
-    
     % annotate information about peaks if they have been calculated
     if sum(strcmp(annotate,'extrema'))>0 || sum(strcmp(annotate,'volumes'))>0 || sum(strcmp(annotate,'maxflow'))>0
         if ~isempty(bm.inhale_peaks) && ~isempty(bm.exhale_troughs)
