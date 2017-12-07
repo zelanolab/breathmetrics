@@ -6,6 +6,13 @@
 % extract respiratory features, access the features of interest, calculate
 % summaries of these features, and visualize them.
 
+%% SETUP:
+% To use BreathMetrics, simply add this directory and all of its 
+% subdirectories to your matlab path. All functions in the
+% breathmetrics_functions directory can be called independantly but it is
+% recommended that you call them within the breathmetrics class object as
+% demonstrated below.
+
 %% Simulating Data for analysis
 % Simulate data for demo
 sim_srate = 1000; % handles weird sampling rates
@@ -18,12 +25,13 @@ pct_phase_pause = 0.75; % add pauses before inhales to this percent of breaths
 
 sim_resp = simulate_resp_data(n_samples, sim_srate, breathing_rate, avg_amp, amp_var, phase_var, pct_phase_pause);
 data_type = 'human';
-%% Load sample data for analysis
 
+%% Load sample data for analysis
 respdat = load('sample_data.mat');
 resp_trace = respdat.resp;
 srate = respdat.srate;
 data_type = 'human';
+
 %%
 % All analyses are done with the breathmetrics class.
 % It requires three inputs:
@@ -155,19 +163,55 @@ exhale_pauses_within_plotlims = find(bm.exhale_pause_onsets>=min(plot_lims) & bm
 
 figure; hold all;
 re=plot(bm.time(plot_lims),bm.baseline_corrected_respiration(plot_lims),'k-');
-io=scatter(bm.time(bm.inhale_onsets(inhale_onsets_within_plotlims)),bm.baseline_corrected_respiration(bm.inhale_onsets(inhale_onsets_within_plotlims)),'go','filled');
-eo=scatter(bm.time(bm.exhale_onsets(exhale_onsets_within_plotlims)),bm.baseline_corrected_respiration(bm.exhale_onsets(exhale_onsets_within_plotlims)),'co','filled');
-ip=scatter(bm.time(bm.inhale_pause_onsets(inhale_pauses_within_plotlims)),bm.baseline_corrected_respiration(bm.inhale_pause_onsets(inhale_pauses_within_plotlims)),'mo','filled');
+io=scatter(bm.time(bm.inhale_onsets(inhale_onsets_within_plotlims)),bm.baseline_corrected_respiration(bm.inhale_onsets(inhale_onsets_within_plotlims)),'bo','filled');
+eo=scatter(bm.time(bm.exhale_onsets(exhale_onsets_within_plotlims)),bm.baseline_corrected_respiration(bm.exhale_onsets(exhale_onsets_within_plotlims)),'ro','filled');
+ip=scatter(bm.time(bm.inhale_pause_onsets(inhale_pauses_within_plotlims)),bm.baseline_corrected_respiration(bm.inhale_pause_onsets(inhale_pauses_within_plotlims)),'go','filled');
 ep=scatter(bm.time(bm.exhale_pause_onsets(exhale_pauses_within_plotlims)),bm.baseline_corrected_respiration(bm.exhale_pause_onsets(exhale_pauses_within_plotlims)),'yo','filled');
 legend([re,io,eo,ip,ep],{'Baseline Corrected Respiration';'Inhale Onsets';'Exhale Onsets';'Inhale Pause Onsets';'Exhale Pause Onsets'})
 xlabel('Time (seconds)');
 ylabel('Respiratory Flow');
 
-%% 2.3 calculate breath volumes
-bm.find_inhale_and_exhale_volumes(verbose);
+%% 2.3 calculate breath offsets
+% each breath ends when either a pause occurs or the next breath begins
+% this function finds the appropriate endpoint for each breath
 
-% same as above 
-disp(bm.inhale_volumes(1:10));
+bm.find_inhale_and_exhale_offsets(bm);
+
+% plot these features
+
+inhale_onsets_within_plotlims = find(bm.inhale_onsets>=min(plot_lims) & bm.inhale_onsets<max(plot_lims));
+exhale_onsets_within_plotlims = find(bm.exhale_onsets>=min(plot_lims) & bm.exhale_onsets<max(plot_lims));
+inhale_offsets_within_plotlims = find(bm.inhale_offsets >= min(plot_lims) & bm.inhale_offsets < max(plot_lims));
+exhale_offsets_within_plotlims = find(bm.exhale_offsets >= min(plot_lims) & bm.exhale_offsets < max(plot_lims));
+
+figure; hold all;
+re=plot(bm.time(plot_lims),bm.baseline_corrected_respiration(plot_lims),'k-');
+io=scatter(bm.time(bm.inhale_onsets(inhale_onsets_within_plotlims)),bm.baseline_corrected_respiration(bm.inhale_onsets(inhale_onsets_within_plotlims)),'bo','filled');
+eo=scatter(bm.time(bm.exhale_onsets(exhale_onsets_within_plotlims)),bm.baseline_corrected_respiration(bm.exhale_onsets(exhale_onsets_within_plotlims)),'ro','filled');
+ip=scatter(bm.time(bm.inhale_offsets(inhale_offsets_within_plotlims)),bm.baseline_corrected_respiration(bm.inhale_offsets(inhale_offsets_within_plotlims)),'go','filled');
+ep=scatter(bm.time(bm.exhale_offsets(exhale_offsets_within_plotlims)),bm.baseline_corrected_respiration(bm.exhale_offsets(exhale_offsets_within_plotlims)),'yo','filled');
+legend([re,io,eo,ip,ep],{'Baseline Corrected Respiration';'Inhale Onsets';'Exhale Onsets';'Inhale Offsets';'Exhale Offsets'})
+xlabel('Time (seconds)');
+ylabel('Respiratory Flow');
+
+%% 2.4 calculate breath lengths
+% calculate the length of each breath and pause
+bm = find_breath_and_pause_lengths(bm);
+
+% plot these features
+figure; hold all;
+re=plot(bm.time(plot_lims),bm.baseline_corrected_respiration(plot_lims),'k-');
+for i=[1,3,5,7]
+    text(bm.time(bm.inhale_peaks(i)),bm.peak_inspiratory_flows(i),sprintf('Inhale: %i, %.2f s',i,bm.inhale_lengths(i)));
+    text(bm.time(bm.exhale_troughs(i)),bm.trough_expiratory_flows(i),sprintf('Exhale: %i, %.2f s',i,bm.exhale_lengths(i)));
+    text(bm.time(bm.inhale_peaks(i))+1,bm.peak_inspiratory_flows(i)-.2, sprintf('Inhale Pause: %i, %.2f s',i,bm.inhale_pause_lengths(i)));
+    text(bm.time(bm.exhale_troughs(i))+1,bm.trough_expiratory_flows(i)-.2, sprintf('Exhale Pause: %i, %.2f s',i,bm.exhale_pause_lengths(i)));
+end
+xlabel('Time (seconds)');
+ylabel('Respiratory Flow');
+
+%% 2.5 calculate breath volumes
+bm.find_inhale_and_exhale_volumes(verbose);
 
 % plot these features
 figure; hold all;
@@ -179,7 +223,7 @@ end
 xlabel('Time (seconds)');
 ylabel('Respiratory Flow');
 
-%% 2.4 rapidly calculate all of the features above
+%% 2.6 rapidly calculate all of the features above
 
 % all of the features above can be called in sequence using the following
 % code:
@@ -187,7 +231,7 @@ bm.estimate_all_features(verbose);
 % NOTE: this uses default parameters for baseline correction (sliding 
 % baseline correction window).
 
-%% 2.5 Respiratory phase
+%% 2.7 Respiratory phase
 
 % We have included code to calculate instantaneus respiratory phase using
 % the angle of hilbert transformed data filtered by the average breathing 

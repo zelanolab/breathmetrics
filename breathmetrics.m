@@ -16,6 +16,8 @@ classdef breathmetrics < handle
         trough_expiratory_flows
         inhale_onsets
         exhale_onsets
+        inhale_offsets
+        exhale_offsets
         inhale_volumes
         exhale_volumes
         inhale_lengths
@@ -192,15 +194,27 @@ classdef breathmetrics < handle
             bm.exhale_onsets = these_exhale_onsets;
             bm.inhale_pause_onsets = these_inhale_pause_onsets;
             bm.exhale_pause_onsets = these_exhale_pause_onsets;
-            %bm.inhale_pause_lengths = (bm.inhale_pause_onsets - bm.inhale_onsets) ./ bm.srate;
-            %bm.exhale_pause_lengths = (bm.exhale_pause_onsets - bm.exhale_onsets) ./ bm.srate;
-            % calculate length of inhale and exhale where air is actually
-            % flowing
-            [these_inhale_lengths, these_exhale_lengths, these_inhale_pause_lengths, these_exhale_pause_lengths] = find_breath_lengths(bm);
-            bm.inhale_lengths = these_inhale_lengths;
-            bm.exhale_lengths = these_exhale_lengths;
-            bm.inhale_pause_lengths = these_inhale_pause_lengths;
-            bm.exhale_pause_lengths = these_exhale_pause_lengths;
+            
+        end
+        
+        function bm = find_inhale_and_exhale_offsets(bm, verbose )
+            % finds the end of each inhale and exhale
+            if nargin < 2
+                verbose = 0;
+            end
+            this_resp = which_resp(bm, verbose);
+            [inhale_offs,exhale_offs]=find_respiratory_offsets(this_resp,bm.inhale_onsets, bm.exhale_onsets, bm.inhale_pause_onsets, bm.exhale_pause_onsets);
+            bm.inhale_offsets=inhale_offs;
+            bm.exhale_offsets=exhale_offs;
+        end
+        
+        function bm = find_breath_and_pause_lengths(bm)
+            % calculate length of each breath
+            [inhale_lens, exhale_lens, inhale_pause_lens, exhale_pause_lens] = find_breath_lengths(bm);
+            bm.inhale_lengths = inhale_lens;
+            bm.exhale_lengths = exhale_lens;
+            bm.inhale_pause_lengths = inhale_pause_lens;
+            bm.exhale_pause_lengths = exhale_pause_lens;
         end
             
         function bm = find_inhale_and_exhale_volumes(bm, verbose )
@@ -209,14 +223,15 @@ classdef breathmetrics < handle
                 verbose = 0;
             end
             this_resp = which_resp(bm, verbose);
-            [inhale_vols,exhale_vols] = find_respiratory_volumes( this_resp, bm.srate, bm.inhale_onsets, bm.exhale_onsets, bm.inhale_pause_onsets, bm.exhale_pause_onsets );
+            [inhale_vols,exhale_vols] = find_respiratory_volumes( this_resp, bm.srate, bm.inhale_onsets, bm.exhale_onsets, bm.inhale_offsets, bm.exhale_offsets);
             bm.inhale_volumes = inhale_vols;
             bm.exhale_volumes = exhale_vols;
         end
         
         function bm = get_secondary_features( bm, verbose )
-            % estimate features dependant on extrema, onsets, and volumes
-            
+            % Estimate all features that can be caluclated using the
+            % parameters above
+            % *dependant on extrema, onsets, and volumes
             if nargin < 2
                 % probably want to print these
                 verbose=1;
@@ -231,7 +246,7 @@ classdef breathmetrics < handle
             keySet = bm.secondary_features.keys;
             disp('Summary of Respiratory Features:')
             for this_key = 1:length(keySet)
-                disp(sprintf('%s : %0.5g',keySet{this_key}, bm.secondary_features(keySet{this_key})));
+                fprintf('\n %s : %0.5g \n',keySet{this_key}, bm.secondary_features(keySet{this_key}));
             end
         end
         
@@ -252,12 +267,17 @@ classdef breathmetrics < handle
             bm.correct_resp_to_baseline(baseline_correction_method, z_score, verbose);
             bm.find_extrema(verbose);
             bm.find_onsets_and_pauses(verbose);
+            bm.find_inhale_and_exhale_offsets(verbose);
+            bm.find_breath_and_pause_lengths();
             bm.find_inhale_and_exhale_volumes(verbose);
             bm.get_secondary_features(verbose);
         end
         
         function bm = calculate_resp_phase(bm, myfilter, rate_estimation, verbose)
             % calculates real-time respiratory phase 
+            % Warning: Because respiration tends to be non-stationary this 
+            % function and other filtering methods are not advised
+            
             this_resp = bm.which_resp();
             if nargin < 4
                 verbose=1;
