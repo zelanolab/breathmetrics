@@ -16,6 +16,9 @@ n_breaths = length(bm.inhale_onsets);
                 this_inhale_pause_length=0;
             end
             this_exhale_length = bm.exhale_lengths(b);
+            if isnan(this_exhale_length)
+                this_exhale_length=0;
+            end
             this_exhale_pause_length = bm.exhale_pause_lengths(b);
             if isnan(this_exhale_pause_length)
                 this_exhale_pause_length=0;
@@ -87,6 +90,9 @@ n_breaths = length(bm.inhale_onsets);
             this_breath_comp(1,ind:ind+this_inhale_pause_length)=1;
             ind=ind+this_inhale_pause_length;
             this_exhale_length = round((bm.exhale_lengths(b)/max_breath_size)*matsize);
+            if isnan(this_exhale_length)
+                this_exhale_length=0;
+            end
             this_breath_comp(1,ind:ind+this_exhale_length)=2;
             ind=ind+this_exhale_length;
             this_exhale_pause_length = round((bm.exhale_pause_lengths(b)/max_breath_size)*matsize);
