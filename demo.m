@@ -15,22 +15,28 @@
 
 %% Simulating Data for analysis
 % Simulate data for demo
-sim_srate = 1000; % handles weird sampling rates
-n_samples = 200 * sim_srate; % 200 seconds of data
-breathing_rate = .25; % breathe once every 4 seconds
-avg_amp = 0.02; % amplitude of inhales and exhales
-amp_var=0.1; % variance in amplitudes
-phase_var = 0.1; % variance in breathing rate
-pct_phase_pause = 0.75; % add pauses before inhales to this percent of breaths
-
-sim_resp = simulate_resp_data(n_samples, sim_srate, breathing_rate, avg_amp, amp_var, phase_var, pct_phase_pause);
-data_type = 'human';
+nSamples = 200 * simSrate; % 200 seconds of data
+simSrate = 1000; % handles weird sampling rates
+breathingRate = .25; % breathe once every 4 seconds
+averageAmplitude = 0.2; % amplitude of inhales and exhales
+amplitudeVariance = 0.1; % variance in amplitudes
+phaseVariance = 0.1; % variance in breathing rate
+pctPhasePause = 0.75; % add pauses before inhales to this percent of breaths
+averagePauseLength = 0.1;
+pauseLengthVariance = 0.5;
+pauseAmplitude = 0.1;
+pauseAmplitudeVariance = 0.5;
+simulatedRespiration = simulateRespiratoryData(nSamples, simSrate, ...
+    breathingRate, averageAmplitude, amplitudeVariance, phaseVariance, ...
+    pctPhasePause, averagePauseLength, pauseLengthVariance, ...
+    pauseAmplitude, pauseAmplitudeVariance);
+dataType = 'human';
 
 %% Load sample data for analysis
-respdat = load('sample_data.mat');
-resp_trace = respdat.resp;
-srate = respdat.srate;
-data_type = 'human';
+respiratoryData = load('sample_data.mat');
+respiratoryTrace = respiratoryData.resp;
+srate = respiratoryData.srate;
+dataType = 'human';
 
 %%
 % All analyses are done with the breathmetrics class.
@@ -46,18 +52,18 @@ data_type = 'human';
 %bm = breathmetrics(sim_resp, sim_srate, data_type);
 
 % real data
-bm = breathmetrics(resp_trace, srate, data_type);
+bm = breathmetrics(respiratoryTrace, srate, dataType);
 
 % bm is now a class object with many properites, most will be empty
 % call bm to see its properties
-% raw_respiration is the raw vector of respiratory data.
-% smoothed_respiration is that vector mean smoothed by 50 ms window. This
+% rawRespiration is the raw vector of respiratory data.
+% smoothedRespiration is that vector mean smoothed by 50 ms window. This
 % is not fully baseline corrected yet.
 % srate is your sampling rate
 % time is a 1xN vector where each point represents where each sample in the
 % other fields occur in real time.
 
-% run bm.estimate_all_features() to gather them all and skip to statistics
+% run bm.estimateAllFeatures() to gather them all and skip to statistics
 % and visualization methods
 
 % run the following cells in sequence as the calculations depend on the
@@ -69,31 +75,31 @@ bm = breathmetrics(resp_trace, srate, data_type);
 verbose=1; 
 
 %use a sliding window to correct respiratory data to baseline
-baseline_correction_method = 'sliding'; 
+baselineCorrectionMethod = 'sliding'; 
 % 'simple' uses the mean. It isless accurate but faster
 %baseline_correction_method = 'simple';
 
-%z_score (1 or 0). 1 z-scores the amplitude values in the recording. Better
+%zScore (1 or 0). 1 z-scores the amplitude values in the recording. Better
 %for between-subject comparisions. 0 does not z-score the data.
-z_score=0;
+zScore=0;
 
-bm.correct_resp_to_baseline(baseline_correction_method, z_score, verbose)
-%bm.estimate_all_features(verbose);
+bm.correctRespirationToBaseline(baselineCorrectionMethod, zScore, verbose)
+%bm.estimateAllFeatures(verbose);
 
 % NOTE: the methods below check if baseline correction as been performed.
-% If there is a value in bm.baseline_corrected_respiration, these analyses
+% If there is a value in bm.baselineCorrectedRespiration, these analyses
 % will automatically be performed on this data.
-% If not, smoothed_respiration will be used. This is allowed, but not 
+% If not, smoothedRespiration will be used. This is allowed, but not 
 % advised as baseline correction is necessary for accurate feature 
 % extraction.
 
 %plot 1 minute of sample data
-plot_lims = 1:60000;
+PLOT_LIMITS = 1:60000;
 figure; hold all;
 
-r=plot(bm.time(plot_lims),bm.raw_respiration(plot_lims),'k-');
-sm=plot(bm.time(plot_lims),bm.smoothed_respiration(plot_lims),'b-');
-bc=plot(bm.time(plot_lims),bm.baseline_corrected_respiration(plot_lims),'r-');
+r=plot(bm.time(PLOT_LIMITS),bm.rawRespiration(PLOT_LIMITS),'k-');
+sm=plot(bm.time(PLOT_LIMITS),bm.smoothedRespiration(PLOT_LIMITS),'b-');
+bc=plot(bm.time(PLOT_LIMITS),bm.baselineCorrectedRespiration(PLOT_LIMITS),'r-');
 legend([r,sm,bc],{'Raw Respiration';'Smoothed Respiration';'Baseline Corrected Respiration'});
 xlabel('Time (seconds)');
 ylabel('Respiratory Flow');
@@ -106,68 +112,97 @@ ylabel('Respiratory Flow');
 
 %% 2.1 finding peaks and troughs
 
-bm.find_extrema(verbose);
-% points where peaks and troughs occur can be accessed at bm.inhale_peaks
+bm.findExtrema(verbose);
+% points where peaks and troughs occur can be accessed at bm.inhalePeaks
 % and bm.exhale_troughs, respectively.
 % similarly, the peak inspiratory and expiratory flow can be accessed at 
-% bm.peak_inspiratory_flows and bm.trough_expiratory_flows
+% bm.peakInspiratoryFlows and bm.troughExpiratoryFlows
 
 % points where the first 10 inhale peaks occur
-disp(bm.inhale_peaks(1:10))
+disp(bm.inhalePeaks(1:10))
 
 % flow value at those peaks
-disp(bm.peak_inspiratory_flows(1:10))
+disp(bm.peakInspiratoryFlows(1:10))
 
 
 % NOTE: To standardize data, inhales always occur before exhales.
-% i.e. bm.inhale_peaks(k) will always be < bm.exhale_troughs(k). 
+% i.e. bm.inhalePeaks(k) will always be < bm.exhaleTroughs(k). 
 % This way it is easy to index which breaths occur when.
 
 
-
 % plot these features
-inhale_peaks_within_plotlims = find(bm.inhale_peaks>=min(plot_lims) & bm.inhale_peaks<max(plot_lims));
-exhale_troughs_within_plotlims = find(bm.exhale_troughs>=min(plot_lims) & bm.exhale_troughs<max(plot_lims));
+inhalePeaksWithinPlotlimits = find(bm.inhalePeaks >= min(PLOT_LIMITS) ...
+    & bm.inhalePeaks < max(PLOT_LIMITS));
+exhaleTroughsWithinPlotlimits = find(bm.exhaleTroughs >= ...
+    min(PLOT_LIMITS) & bm.exhaleTroughs < max(PLOT_LIMITS));
 
 figure; hold all;
-re=plot(bm.time(plot_lims),bm.baseline_corrected_respiration(plot_lims),'k-');
-ip=scatter(bm.time(bm.inhale_peaks(inhale_peaks_within_plotlims)),bm.peak_inspiratory_flows(inhale_peaks_within_plotlims),'ro','filled');
-et=scatter(bm.time(bm.exhale_troughs(exhale_troughs_within_plotlims)),bm.trough_expiratory_flows(exhale_troughs_within_plotlims),'bo','filled');
-legend([re,ip,et],{'Baseline Corrected Respiration';'Inhale Peaks';'Exhale Troughs'})
+re=plot(bm.time(PLOT_LIMITS), ...
+    bm.baselineCorrectedRespiration(PLOT_LIMITS), 'k-');
+ip=scatter(bm.time(bm.inhalePeaks(inhalePeaksWithinPlotlimits)), ...
+    bm.peakInspiratoryFlows(inhalePeaksWithinPlotlimits),'ro','filled');
+et=scatter(bm.time(bm.exhaleTroughs(exhaleTroughsWithinPlotlimits)), ...
+    bm.troughExpiratoryFlows(exhaleTroughsWithinPlotlimits), ...
+    'bo', 'filled');
+legendText = {
+    'Baseline Corrected Respiration';
+    'Inhale Peaks'; 
+    'Exhale Troughs'
+    };
+legend([re,ip,et],legendText);
 xlabel('Time (seconds)');
 ylabel('Respiratory Flow');
 
 %% 2.2 estimate inhale and exhale onsets, and pauses
-bm.find_onsets_and_pauses(verbose);
+bm.findOnsetsAndPauses(verbose);
 
 % first 10 inhale onsets
-disp(bm.inhale_onsets(1:10));
+disp(bm.inhaleOnsets(1:10));
 
 % NOTE: each breath onset is indexed at the peak of the same breath.
-% i.e. bm.inhale_onsets(k) is the same breath as bm.inhale_peaks(k).
+% i.e. bm.inhaleOnsets(k) is the same breath as bm.inhalePeaks(k).
 
 % first 10 inhale pauses
-disp(bm.inhale_pause_onsets);
+disp(bm.inhalePauseOnsets);
 
-% NOTE: if a pause does not occur at breath k, bm.inhale_pause_onsets(k)
+% NOTE: if a pause does not occur at breath k, bm.inhalePauseOnsets(k)
 % will be nan.
 % Similar to onsets, pauses are indexed at the same breath.
-% bm.inhale_onsets(k) will always be < bm.pause_onsets(k) if a pause occurs
+% bm.inhaleOnsets(k) will always be < bm.pauseOnsets(k) if a pause occurs
 
 % plot these features
 
-inhale_onsets_within_plotlims = find(bm.inhale_onsets>=min(plot_lims) & bm.inhale_onsets<max(plot_lims));
-exhale_onsets_within_plotlims = find(bm.exhale_onsets>=min(plot_lims) & bm.exhale_onsets<max(plot_lims));
-inhale_pauses_within_plotlims = find(bm.inhale_pause_onsets>=min(plot_lims) & bm.inhale_pause_onsets<max(plot_lims));
-exhale_pauses_within_plotlims = find(bm.exhale_pause_onsets>=min(plot_lims) & bm.exhale_pause_onsets<max(plot_lims));
+inhaleOnsetsWithinPlotLimits = find(bm.inhaleOnsets >= min(PLOT_LIMITS) ...
+    & bm.inhaleOnsets<max(PLOT_LIMITS));
+exhaleOnsetsWithinPlotLimits = find(bm.exhaleOnsets >= min(PLOT_LIMITS) ...
+    & bm.exhaleOnsets<max(PLOT_LIMITS));
+inhalePausesWithinPlotLimits = find(bm.inhalePauseOnsets >= ...
+    min(PLOT_LIMITS) & bm.inhalePauseOnsets < max(PLOT_LIMITS));
+exhalePausesWithinPlotLimits = find(bm.exhalePauseOnsets >= ...
+    min(PLOT_LIMITS) & bm.exhalePauseOnsets<max(PLOT_LIMITS));
 
 figure; hold all;
-re=plot(bm.time(plot_lims),bm.baseline_corrected_respiration(plot_lims),'k-');
-io=scatter(bm.time(bm.inhale_onsets(inhale_onsets_within_plotlims)),bm.baseline_corrected_respiration(bm.inhale_onsets(inhale_onsets_within_plotlims)),'bo','filled');
-eo=scatter(bm.time(bm.exhale_onsets(exhale_onsets_within_plotlims)),bm.baseline_corrected_respiration(bm.exhale_onsets(exhale_onsets_within_plotlims)),'ro','filled');
-ip=scatter(bm.time(bm.inhale_pause_onsets(inhale_pauses_within_plotlims)),bm.baseline_corrected_respiration(bm.inhale_pause_onsets(inhale_pauses_within_plotlims)),'go','filled');
-ep=scatter(bm.time(bm.exhale_pause_onsets(exhale_pauses_within_plotlims)),bm.baseline_corrected_respiration(bm.exhale_pause_onsets(exhale_pauses_within_plotlims)),'yo','filled');
-legend([re,io,eo,ip,ep],{'Baseline Corrected Respiration';'Inhale Onsets';'Exhale Onsets';'Inhale Pause Onsets';'Exhale Pause Onsets'})
+re=plot(bm.time(PLOT_LIMITS), ...
+    bm.baselineCorrectedRespiration(PLOT_LIMITS),'k-');
+io=scatter(bm.time(bm.inhaleOnsets(inhaleOnsetsWithinPlotLimits)), ...
+    bm.baselineCorrectedRespiration( ...
+    bm.inhaleOnsets(inhaleOnsetsWithinPlotLimits)),'bo','filled');
+eo=scatter(bm.time(bm.exhaleOnsets(exhaleOnsetsWithinPlotLimits)), ...
+    bm.baselineCorrectedRespiration(bm.exhaleOnsets( ...
+    exhaleOnsetsWithinPlotLimits)), 'ro', 'filled');
+ip=scatter(bm.time(bm.inhalePauseOnsets(inhalePausesWithinPlotLimits)) ...
+    ,bm.baselineCorrectedRespiration(bm.inhalePauseOnsets( ...
+    inhalePausesWithinPlotLimits)), 'go', 'filled');
+ep=scatter(bm.time(bm.exhalePauseOnsets(exhalePausesWithinPlotLimits)), ...
+    bm.baselineCorrectedRespiration(bm.exhalePauseOnsets( ...
+    exhalePausesWithinPlotLimits)), 'yo', 'filled');
+legendText={
+    'Baseline Corrected Respiration';
+    'Inhale Onsets';'Exhale Onsets';
+    'Inhale Pause Onsets';
+    'Exhale Pause Onsets'
+    };
+legend([re,io,eo,ip,ep],legendText);
 xlabel('Time (seconds)');
 ylabel('Respiratory Flow');
 
@@ -175,50 +210,77 @@ ylabel('Respiratory Flow');
 % each breath ends when either a pause occurs or the next breath begins
 % this function finds the appropriate endpoint for each breath
 
-bm.find_inhale_and_exhale_offsets(bm);
+bm.findInhaleAndExhaleOffsets(bm);
 
 % plot these features
 
-inhale_onsets_within_plotlims = find(bm.inhale_onsets>=min(plot_lims) & bm.inhale_onsets<max(plot_lims));
-exhale_onsets_within_plotlims = find(bm.exhale_onsets>=min(plot_lims) & bm.exhale_onsets<max(plot_lims));
-inhale_offsets_within_plotlims = find(bm.inhale_offsets >= min(plot_lims) & bm.inhale_offsets < max(plot_lims));
-exhale_offsets_within_plotlims = find(bm.exhale_offsets >= min(plot_lims) & bm.exhale_offsets < max(plot_lims));
+inhaleOnsetsWithinPlotLimits = find(bm.inhaleOnsets >= ...
+    min(PLOT_LIMITS) & bm.inhaleOnsets<max(PLOT_LIMITS));
+exhaleOnsetsWithinPlotLimits = find(bm.exhaleOnsets >= ...
+    min(PLOT_LIMITS) & bm.exhaleOnsets<max(PLOT_LIMITS));
+inhaleOffsetsWithinPlotLimits = find(bm.inhaleOffsets >= ...
+    min(PLOT_LIMITS) & bm.inhaleOffsets < max(PLOT_LIMITS));
+exhaleOffsetsWithinPlotLimits = find(bm.exhaleOffsets >= ...
+    min(PLOT_LIMITS) & bm.exhaleOffsets < max(PLOT_LIMITS));
 
 figure; hold all;
-re=plot(bm.time(plot_lims),bm.baseline_corrected_respiration(plot_lims),'k-');
-io=scatter(bm.time(bm.inhale_onsets(inhale_onsets_within_plotlims)),bm.baseline_corrected_respiration(bm.inhale_onsets(inhale_onsets_within_plotlims)),'bo','filled');
-eo=scatter(bm.time(bm.exhale_onsets(exhale_onsets_within_plotlims)),bm.baseline_corrected_respiration(bm.exhale_onsets(exhale_onsets_within_plotlims)),'ro','filled');
-ip=scatter(bm.time(bm.inhale_offsets(inhale_offsets_within_plotlims)),bm.baseline_corrected_respiration(bm.inhale_offsets(inhale_offsets_within_plotlims)),'go','filled');
-ep=scatter(bm.time(bm.exhale_offsets(exhale_offsets_within_plotlims)),bm.baseline_corrected_respiration(bm.exhale_offsets(exhale_offsets_within_plotlims)),'yo','filled');
-legend([re,io,eo,ip,ep],{'Baseline Corrected Respiration';'Inhale Onsets';'Exhale Onsets';'Inhale Offsets';'Exhale Offsets'})
+re=plot(bm.time(PLOT_LIMITS), ...
+    bm.baselineCorrectedRespiration(PLOT_LIMITS),'k-');
+io=scatter(bm.time(bm.inhaleOnsets(inhaleOnsetsWithinPlotLimits)), ...
+    bm.baselineCorrectedRespiration(bm.inhaleOnsets( ...
+    inhaleOnsetsWithinPlotLimits)), 'bo', 'filled');
+eo=scatter(bm.time(bm.exhaleOnsets(exhaleOnsetsWithinPlotLimits)), ...
+    bm.baselineCorrectedRespiration(bm.exhaleOnsets( ...
+    exhaleOnsetsWithinPlotLimits)),'ro','filled');
+ip=scatter(bm.time(bm.inhaleOffsets(inhaleOffsetsWithinPlotLimits)), ...
+    bm.baselineCorrectedRespiration(bm.inhaleOffsets( ...
+    inhaleOffsetsWithinPlotLimits)),'go','filled');
+ep=scatter(bm.time(bm.exhaleOffsets(exhaleOffsetsWithinPlotLimits)), ...
+    bm.baselineCorrectedRespiration(bm.exhaleOffsets( ...
+    exhaleOffsetsWithinPlotLimits)),'yo','filled');
+legendText = {
+    'Baseline Corrected Respiration';
+    'Inhale Onsets';
+    'Exhale Onsets';
+    'Inhale Offsets';
+    'Exhale Offsets'};
+legend([re,io,eo,ip,ep],legendText);
 xlabel('Time (seconds)');
 ylabel('Respiratory Flow');
 
 %% 2.4 calculate breath lengths
 % calculate the length of each breath and pause
-bm = find_breath_and_pause_lengths(bm);
+bm = findBreathAndPauseLengths(bm);
 
 % plot these features
 figure; hold all;
-re=plot(bm.time(plot_lims),bm.baseline_corrected_respiration(plot_lims),'k-');
+re=plot(bm.time(PLOT_LIMITS), ...
+    bm.baselineCorrectedRespiration(PLOT_LIMITS), 'k-');
 for i=[1,3,5,7]
-    text(bm.time(bm.inhale_peaks(i)),bm.peak_inspiratory_flows(i),sprintf('Inhale: %i, %.2f s',i,bm.inhale_lengths(i)));
-    text(bm.time(bm.exhale_troughs(i)),bm.trough_expiratory_flows(i),sprintf('Exhale: %i, %.2f s',i,bm.exhale_lengths(i)));
-    text(bm.time(bm.inhale_peaks(i))+1,bm.peak_inspiratory_flows(i)-.2, sprintf('Inhale Pause: %i, %.2f s',i,bm.inhale_pause_lengths(i)));
-    text(bm.time(bm.exhale_troughs(i))+1,bm.trough_expiratory_flows(i)-.2, sprintf('Exhale Pause: %i, %.2f s',i,bm.exhale_pause_lengths(i)));
+    text(bm.time(bm.inhalePeaks(i)),bm.peakInspiratoryFlows(i), ...
+        sprintf('Inhale: %i, %.2f s',i,bm.inhaleLengths(i)));
+    text(bm.time(bm.exhaleTroughs(i)),bm.troughExpiratoryFlows(i), ...
+        sprintf('Exhale: %i, %.2f s',i,bm.exhaleLengths(i)));
+    text(bm.time(bm.inhalePeaks(i))+1,bm.peakInspiratoryFlows(i)-.2, ...
+        sprintf('Inhale Pause: %i, %.2f s',i,bm.inhalePauseLengths(i)));
+    text(bm.time(bm.exhaleTroughs(i))+1,bm.troughExpiratoryFlows(i)-.2, ...
+        sprintf('Exhale Pause: %i, %.2f s',i,bm.exhalePauseLengths(i)));
 end
 xlabel('Time (seconds)');
 ylabel('Respiratory Flow');
 
 %% 2.5 calculate breath volumes
-bm.find_inhale_and_exhale_volumes(verbose);
+bm.findInhaleAndExhaleVolumes(verbose);
 
 % plot these features
 figure; hold all;
-re=plot(bm.time(plot_lims),bm.baseline_corrected_respiration(plot_lims),'k-');
+re=plot(bm.time(PLOT_LIMITS), ...
+    bm.baselineCorrectedRespiration(PLOT_LIMITS), 'k-');
 for i=1:5
-    text(bm.time(bm.inhale_peaks(i)),bm.peak_inspiratory_flows(i),sprintf('Inhale: %i, Volume: %.2f',i,bm.inhale_volumes(i)));
-    text(bm.time(bm.exhale_troughs(i)),bm.trough_expiratory_flows(i),sprintf('Exhale: %i, Volume: %.2f',i,bm.exhale_volumes(i)));
+    text(bm.time(bm.inhalePeaks(i)), bm.peakInspiratoryFlows(i), ...
+        sprintf('Inhale: %i, Volume: %.2f',i,bm.inhaleVolumes(i)));
+    text(bm.time(bm.exhaleTroughs(i)),bm.troughExpiratoryFlows(i), ...
+        sprintf('Exhale: %i, Volume: %.2f',i,bm.exhaleVolumes(i)));
 end
 xlabel('Time (seconds)');
 ylabel('Respiratory Flow');
@@ -227,7 +289,7 @@ ylabel('Respiratory Flow');
 
 % all of the features above can be called in sequence using the following
 % code:
-bm.estimate_all_features(verbose);
+bm.estimateAllFeatures(verbose);
 % NOTE: this uses default parameters for baseline correction (sliding 
 % baseline correction window).
 
@@ -241,37 +303,38 @@ bm.estimate_all_features(verbose);
 % conclusions that should be reproduced using the other methods.
 
 % If desired, this calculation can be performed using:
-% bm.calculate_respiratory_phase(custom_filter, rate_estimation, verbose)
+% bm.calculateRespiratoryPhase(customFilter, rate_estimation, verbose)
 
 % if a custom filter is left empty, this butterworth filter will be used:
-% myfilter = designfilt('lowpassfir', 'PassbandFrequency', filt_center, 'StopbandFrequency',filt_center + 0.2);
+% myfilter = designfilt('lowpassfir', 'PassbandFrequency', filt_center, ...
+%                           'StopbandFrequency',filt_center + 0.2);
 % breathing rate estimation can be calculated using the breathing rate
 % found using the summary statistic method below by calling 
 % 'feature_derived' or can be calculated using the peak of the power
 % spectrum by calling 'pspec'
 
 %% 3 calculate summary statistics 
-bm.estimate_all_features(verbose);
+bm.estimateAllFeatures(verbose);
 
-% these can be viewed easily using bm.disp_secondary_features();
+% these can be viewed easily using bm.dispSecondaryFeatures();
 
 % secondary statistics are stored as key:value pairs.
 % Values can be called using their corresponding key.
-stat_keys = bm.secondary_features.keys();
-breathing_rate_key = stat_keys{11}; % 'Breathing Rate'
-breathing_rate = bm.secondary_features(breathing_rate_key);
-fprintf('\n Breathing Rate: %.2g \n',breathing_rate);
+statKeys = bm.secondaryFeatures.keys();
+breathingRateKey = statKeys{11}; % 'Breathing Rate'
+breathingRate = bm.secondaryFeatures(breathingRateKey);
+fprintf('\n Breathing Rate: %.2g \n',breathingRate);
 
 %% 4 visualize all of the features that this toolbox can calculate
-% bm.plot_features() allows you to see the location and value of each
+% bm.plotFeatures() allows you to see the location and value of each
 % feature that has been calculated.
 % because many features can be estimated, the user can choose which ones to
 % annotate using the following options:
 annotations = {'extrema', 'onsets','maxflow','volumes', 'pauses'};
 
 % examples
-fig = bm.plot_features({annotations{1},annotations{3}});
-fig = bm.plot_features(annotations{5});
+fig = bm.plotFeatures({annotations{1},annotations{3}});
+fig = bm.plotFeatures(annotations{5});
 
 %% 4.1 visualize breath compositions
 
@@ -280,9 +343,9 @@ fig = bm.plot_features(annotations{5});
 
 % these can be visualized in three ways: 'raw', 'normalized', or 'line'
 
-fig = bm.plot_compositions('raw');
-fig = bm.plot_compositions('normalized');
-fig = bm.plot_compositions('line');
+fig = bm.plotCompositions('raw');
+fig = bm.plotCompositions('normalized');
+fig = bm.plotCompositions('line');
 
 
 
@@ -293,7 +356,7 @@ fig = bm.plot_compositions('line');
 
 % Pick events to visualize. For this example, we will use inhale onsets but
 % this can be experimental events as well.
-my_events = bm.inhale_onsets;
+myEvents = bm.inhaleOnsets;
 
 % set number of samples before and after events to visualize
 pre=500;
@@ -304,16 +367,16 @@ post=4000;
 % visualization and the user will be notivied.
 
 % First calculate the erp matrix of breath amplitudes x time using:
-bm.erp(my_events,pre,post);
+bm.calculateERP(myEvents, pre, post);
 
 % To access the data of event related potentials you can use:
-% bm.erp_matrix 
+% bm.ERPMatrix 
 %to get the amplitude values and: 
-%bm.erp_x_axis 
+%bm.ERPxAxis 
 % to get the timing of the events in real time.
 
 % plot the data stored in the class using:
-bm.plot_respiratory_erp('simple');
+bm.plotRespiratoryERP('simple');
 
 
 %% 4.3 calculate and plot resampled event related respiratory responses
@@ -323,20 +386,17 @@ bm.plot_respiratory_erp('simple');
 
 % this can be done by first selecting the proportion of the breathing cycle
 % to plot before and after. 1 is a full cycle
-pre_resampled = .5;
-post_resampled = 1;
-bm.resampled_erp(my_events, pre_resampled, post_resampled);
+preResampled = .5;
+postResampled = 1;
+bm.calculateResampledERP(myEvents, preResampled, postResampled);
 
 % To access the data of resampled event related potentials you can use:
-% bm.resampled_erp_matrix 
+% bm.resampledERPMatrix 
 %to get the amplitude values and: 
-%bm.resampled_erp_x_axis 
+%bm.resampledERPxAxis 
 % to get the normalized points in phase.
 
 % plot it
-bm.plot_respiratory_erp('resampled');
+bm.plotRespiratoryERP('resampled');
 
 %% That's all! Thanks!
-
-
-
