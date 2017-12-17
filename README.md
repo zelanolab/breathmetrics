@@ -7,7 +7,7 @@ BreathMetrics has functions to extract features such as times of breath onsets, 
 
 ### Structure And Paramaterization of BreathMetrics Class Object
 
-![BreathMetrics Class Structure](img/readme_class_output.png =250)
+<img src="img/readme_class_output.png" width="200" />
 
 
 #### Visualizing Features Calculated Using BreathMetrics 
