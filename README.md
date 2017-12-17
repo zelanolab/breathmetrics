@@ -8,7 +8,9 @@ BreathMetrics has functions to extract features such as times of breath onsets, 
 
 ## Usage
 First clone this repository and append it to your Matlab path.
-Instructions for using this toolbox are described in demo.m
+
+Instructions for using this toolbox (calculating specific features and accessing them) are described in demo.m
+
 To reproduce the figures above, move to the breathmetrics directory and run:
 
 ```matlab
