@@ -26,3 +26,5 @@ fig = bm.plotCompositions('normalized');
 fig = bm.plotCompositions('line');
 ```
 
+## Dependencies
+Matlab 2017b
