@@ -286,7 +286,7 @@ classdef breathmetrics < handle
                 zScore = 0;
             end
             if nargin < 3
-                baselineCorrectionMethod = 'simple';
+                baselineCorrectionMethod = 'sliding';
             end
             if nargin < 4
                 verbose = 1;

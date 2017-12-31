@@ -50,17 +50,32 @@ avgTidalVolume = avgInhaleVolumes + avgExhaleVolumes;
 minuteVentilation = breathingRate*avgTidalVolume;
 
 % duty cycle is the percent of each breathing cycle that was spent inhaling
-inhaleDurations = Bm.exhaleOnsets - Bm.inhaleOnsets;
-avgInhaleDuration = nanmean(inhaleDurations)/Bm.srate;
-dutyCycle = avgInhaleDuration / interBreathInterval;
+avgInhaleLength = nanmean(Bm.inhaleLengths);
+avgExhaleLength = nanmean(Bm.exhaleLengths);
 
-CVInhaleDurations = std(inhaleDurations)/mean(inhaleDurations);
+dutyCycle = avgInhaleLength / interBreathInterval;
 
-avgExhaleDurations = interBreathInterval - avgInhaleDuration;
+CVInhaleLengths = nanstd(Bm.inhaleLengths)/avgInhaleLength;
 
 % coefficient of variation of breathing rate describes variability in time
 % between breaths
 cvBreathingRate = std(diff(Bm.inhalePeaks))/mean(diff(Bm.inhalePeaks));
+
+pctInhalePauses = sum(Bm.inhalePauseOnsets > 0 ) / ...
+    length(Bm.inhalePauseOnsets);
+
+avgInhalePauseLength = nanmean(Bm.inhalePauseLengths(Bm.inhalePauseLengths>0));
+if isempty(avgInhalePauseLength) || isnan(avgInhalePauseLength)
+        avgInhalePauseLength=0;
+end
+    
+pctExhalePauses = sum(Bm.exhalePauseOnsets > 0 ) / ...
+        length(Bm.exhalePauseOnsets);
+
+avgExhalePauseLength = nanmean(Bm.exhalePauseLengths(Bm.exhalePauseLengths>0));
+if isempty(avgExhalePauseLength) || isnan(avgExhalePauseLength)
+        avgExhalePauseLength=0;
+end
 
 % coefficient of variation in breath size describes variability of breath
 % sizes
@@ -79,7 +94,11 @@ keySet= {
     'Duty Cycle';
     'Coefficient of Variation of Duty Cycle';
     'Average Inhale Length';
+    'Average Inhale Pause Length';
     'Average Exhale Length';
+    'Average Exhale Pause Length';
+    'Percent of Breaths With Inhale Pause';
+    'Percent of Breaths With Exhale Pause';
     'Coefficient of Variation of Breathing Rate';
     'Coefficient of Variation of Breath Volumes';
     };
@@ -94,42 +113,16 @@ valueSet={
     avgTidalVolume; 
     minuteVentilation; 
     dutyCycle; 
-    CVInhaleDurations;
-    avgInhaleDuration;
-    avgExhaleDurations;
+    CVInhaleLengths;
+    avgInhaleLength;
+    avgInhalePauseLength;
+    avgExhaleLength;
+    avgExhalePauseLength;
+    pctInhalePauses
+    pctExhalePauses;
     cvBreathingRate; 
     CVTidalVolumes;
     };
-
-% only include respiratory pauses for humans
-if strcmp(Bm.dataType, 'human')
-    pctInhalePauses = sum(Bm.inhalePauseOnsets > 0 ) / ...
-        length(Bm.inhalePauseOnsets);
-    avgInhalePauseLengths = ... 
-        nanmean(Bm.inhalePauseLengths(Bm.inhalePauseLengths>0));
-    if isempty(avgInhalePauseLengths) || isnan(avgInhalePauseLengths)
-        avgInhalePauseLengths=0;
-    end
-    
-    keySet{end+1} = 'Percent of Inhales With Pauses';
-    keySet{end+1} = 'Average Length of Inhale Pause';
-    valueSet{end+1} = pctInhalePauses;
-    valueSet{end+1} = avgInhalePauseLengths;
-    
-    pctInhalePauses = sum(Bm.exhalePauseOnsets > 0 ) / ...
-        length(Bm.exhalePauseOnsets);
-    avgExhalePauseLengths = ...
-        nanmean(Bm.exhalePauseLengths(Bm.exhalePauseLengths>0));
-    
-    if isempty(avgExhalePauseLengths)|| isnan(avgExhalePauseLengths)
-        avgExhalePauseLengths=0;
-    end
-    
-    keySet{end+1} = 'Percent of Exhales With Pauses';
-    keySet{end+1} = 'Average Length of Exhale Pause';
-    valueSet{end+1} = pctInhalePauses;
-    valueSet{end+1} = avgExhalePauseLengths;
-end
     
 respirationStatistics = containers.Map(keySet,valueSet);
 
