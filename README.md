@@ -4,7 +4,16 @@ BreathMetrics is a Matlab toolbox for algorithmic feature extraction of human re
 BreathMetrics has functions to extract features such as times of breath onsets, volumes of individual breaths, and pauses in breathing, as well as summary statistics such as breathing rate, minute ventilation, and tidal volume. These features can also be visualized in several ways.
 
 ## Example Output
-![BreathMetrics Output](readme_figure.png "BreathMetrics Output")
+
+### Structure And Paramaterization of BreathMetrics Class Object
+
+<img src="img/readme_class_output.png" width="400" />
+
+
+#### Visualizing Features Calculated Using BreathMetrics 
+
+<img src="img/readme_visualization.png" width="800" />
+
 
 ## Usage
 First clone this repository and append it to your Matlab path.
