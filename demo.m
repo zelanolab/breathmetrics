@@ -15,21 +15,27 @@
 
 %% Simulating Data for analysis
 % Simulate data for demo
-nSamples = 200 * simSrate; % 200 seconds of data
-simSrate = 1000; % handles weird sampling rates
-breathingRate = .25; % breathe once every 4 seconds
-averageAmplitude = 0.2; % amplitude of inhales and exhales
-amplitudeVariance = 0.1; % variance in amplitudes
-phaseVariance = 0.1; % variance in breathing rate
-pctPhasePause = 0.75; % add pauses before inhales to this percent of breaths
-averagePauseLength = 0.1;
-pauseLengthVariance = 0.5;
-pauseAmplitude = 0.1;
-pauseAmplitudeVariance = 0.5;
-simulatedRespiration = simulateRespiratoryData(nSamples, simSrate, ...
+nBreathingCycles=100; % number of breathing cycles to simulate
+srate=2000; % sampling rate
+breathingRate=.25; % breathing rate
+averageAmplitude=2; % average flow of inhales and exhales
+amplitudeVariance=.25; % variance in inhale and exhale amplitudes [0,1]
+phaseVariance=.1; % variance in inter-breath intervals [0,1]
+inhalePausePct=.3; % proportion of inhales followed by a pause [0,1]
+inhalePauseAvgLength=.1; % proportion of inhale occupied by pause [0,1]
+inhalePauseLengthVariance=.2; % variance in inhale pause lengths [0,1]
+exhalePausePct=.3; % proportion of inhales followed by a pause [0,1]
+exhalePauseAvgLength=.1; % proportion of exhale occupied by pause [0,1]
+exhalePauseLengthVariance=.2; % variance in exhale pause lengths [0,1]
+pauseAmplitude=.1; % amplitude of pauses
+pauseAmplitudeVariance=.2; % variance in amplitude of pauses [0,1]
+signalNoise = 0; % proportion of signal that is noise [0,1]
+
+[simulatedRespiration, params1, params2] = simulateRespiratoryData(nBreathingCycles, srate, ...
     breathingRate, averageAmplitude, amplitudeVariance, phaseVariance, ...
-    pctPhasePause, averagePauseLength, pauseLengthVariance, ...
-    pauseAmplitude, pauseAmplitudeVariance);
+    inhalePausePct, inhalePauseAvgLength, inhalePauseLengthVariance, ...
+    exhalePausePct, exhalePauseAvgLength, exhalePauseLengthVariance, ...
+    pauseAmplitude, pauseAmplitudeVariance, signalNoise);
 dataType = 'human';
 
 %% Load sample data for analysis
@@ -285,7 +291,7 @@ end
 xlabel('Time (seconds)');
 ylabel('Respiratory Flow');
 
-%% 2.6 rapidly calculate all of the features above
+%% 2.6 rapidly calculate all of the features shown above
 
 % all of the features above can be called in sequence using the following
 % code:
@@ -323,7 +329,7 @@ bm.estimateAllFeatures(verbose);
 statKeys = bm.secondaryFeatures.keys();
 breathingRateKey = statKeys{11}; % 'Breathing Rate'
 breathingRate = bm.secondaryFeatures(breathingRateKey);
-fprintf('\n Breathing Rate: %.2g \n',breathingRate);
+fprintf('\nBreathing Rate: %.2g \n', breathingRate);
 
 %% 4 visualize all of the features that this toolbox can calculate
 % bm.plotFeatures() allows you to see the location and value of each
@@ -399,4 +405,4 @@ bm.calculateResampledERP(myEvents, preResampled, postResampled);
 % plot it
 bm.plotRespiratoryERP('resampled');
 
-%% That's all! Thanks!
+%% That's all! 
