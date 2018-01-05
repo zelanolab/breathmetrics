@@ -2,7 +2,7 @@ function [simulatedRespiration, params1, params2] = simulateRespiratoryData(nCyc
     breathingRate, averageAmplitude, amplitudeVariance, phaseVariance, ...
     inhalePausePct, inhalePauseAvgLength, inhalePauseLengthVariance, ...
     exhalePausePct, exhalePauseAvgLength, exhalePauseLengthVariance, ...
-    pauseAmplitude, pauseAmplitudeVariance)
+    pauseAmplitude, pauseAmplitudeVariance, signalNoise)
 
 if nargin < 1
     nCycles = 100; % 
@@ -57,6 +57,10 @@ end
 
 if nargin < 14
     pauseAmplitudeVariance = 0.2; % variance in pause lengths
+end
+
+if nargin < 15
+    signalNoise = 0.1; % percent signal noise
 end
 
 samplePhase = srate / breathingRate;
@@ -139,6 +143,15 @@ for c = 1:nCycles
     simulatedRespiration(1, i:i+length(thisBreath) - 1) = thisBreath;
     i = i + length(thisBreath) - 1;
 end
+
+if signalNoise == 0
+    signalNoise = 0.0001;
+end
+
+% add signal noise to simulated respiration
+noiseVector = rand(size(simulatedRespiration)) * averageAmplitude;
+simulatedRespiration = (simulatedRespiration * (1-signalNoise)) + (noiseVector * signalNoise);
+
 
 % assign values to parameters for later analyses
 params1KeySet= {
