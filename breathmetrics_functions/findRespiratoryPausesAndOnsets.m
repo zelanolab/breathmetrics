@@ -1,6 +1,6 @@
 function [ inhaleOnsets, exhaleOnsets, inhalePauseOnsets, ...
     exhalePauseOnsets ] = ...
-    findRespiratoryPausesAndOnsets( resp, myPeaks, myTroughs )
+    findRespiratoryPausesAndOnsets( resp, myPeaks, myTroughs, nBINS )
 %FIND_RESPIRATORY_PAUSES_AND_ONSETS finds each breath onset and respiratory
 %pause in the data, given the peaks and troughs
 
@@ -24,10 +24,18 @@ exhalePauseOnsets = zeros(1,length(myPeaks));
 inhalePauseOnsets(:)=nan;
 exhalePauseOnsets(:)=nan;
 
-
-% free parameter. 100 bins works well for my data. Will probably break if
+% 100 bins works well for data with sampling rates>100 Hz. 
+% use differen nBINS for data with lower sampling rates
 % sampling rate is too slow.
-nBINS = 100;
+if nargin<4
+    nBINS = 100;
+end
+    
+if nBINS == 100
+    maxPauseBins=5;
+else
+    maxPauseBins=2;
+end
 
 % free parameter for sensitivity of calling something a pause or not.
 MAXIMUM_BIN_THRESHOLD = 5;
@@ -112,7 +120,7 @@ for THIS_BREATH = 1:length(myPeaks)-1
         BINNING_THRESHOLD = .25; 
         
         % add bins in positive direction
-        for ADDITIONAL_BIN = 1:5
+        for ADDITIONAL_BIN = 1:maxPauseBins
             THIS_BIN = MODE_BIN-ADDITIONAL_BIN;
             nVALS_ADDED = AMPLITUDE_VALUES(THIS_BIN);
             if nVALS_ADDED > MAX_BIN_TOTAL * BINNING_THRESHOLD
@@ -121,7 +129,7 @@ for THIS_BREATH = 1:length(myPeaks)-1
         end
         
         % add bins in negative direction
-        for ADDITIONAL_BIN = 1:5
+        for ADDITIONAL_BIN = 1:maxPauseBins
             THIS_BIN = MODE_BIN+ADDITIONAL_BIN;
             nVALS_ADDED = AMPLITUDE_VALUES(THIS_BIN);
             if nVALS_ADDED > MAX_BIN_TOTAL * BINNING_THRESHOLD

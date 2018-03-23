@@ -4,6 +4,7 @@ function [simulatedRespiration, params1, params2] = simulateRespiratoryData(nCyc
     exhalePausePct, exhalePauseAvgLength, exhalePauseLengthVariance, ...
     pauseAmplitude, pauseAmplitudeVariance, signalNoise)
 
+% bug if phase variance is too high
 if nargin < 1
     nCycles = 100; % 
 end
@@ -28,11 +29,11 @@ if nargin < 6
 end
 
 if nargin < 7
-    inhalePausePct = 0.1; % percent of breaths with pauses
+    inhalePausePct = 0.3; % percent of breaths with pauses
 end
 
 if nargin < 8
-    inhalePauseAvgLength = 0.1; % length of pauses
+    inhalePauseAvgLength = 0.2; % length of pauses
 end
 
 if nargin < 9
@@ -40,11 +41,11 @@ if nargin < 9
 end
 
 if nargin < 10
-    exhalePausePct = 0.1; % percent of breaths with pauses
+    exhalePausePct = 0.3; % percent of breaths with pauses
 end
 
 if nargin < 11
-    exhalePauseAvgLength = 0.1; % length of pauses
+    exhalePauseAvgLength = 0.2; % length of pauses
 end
 
 if nargin < 12
@@ -56,7 +57,7 @@ if nargin < 13
 end
 
 if nargin < 14
-    pauseAmplitudeVariance = 0.2; % variance in pause lengths
+    pauseAmplitudeVariance = 0.2; % variance in pause amplitudes
 end
 
 if nargin < 15
@@ -91,10 +92,18 @@ simulatedRespiration = [];
 % initialize parameters to save
 inhaleOnsets=zeros(1,nCycles);
 exhaleOnsets=zeros(1,nCycles);
+
+inhalePauseOnsets=zeros(1,nCycles);
+exhalePauseOnsets=zeros(1,nCycles);
+
 inhaleLengths=zeros(1,nCycles);
 inhalePauseLengths=zeros(1,nCycles);
+
 exhaleLengths=zeros(1,nCycles);
 exhalePauseLengths=zeros(1,nCycles);
+
+inhalePeaks=zeros(1,nCycles);
+exhaleTroughs=zeros(1,nCycles);
 
 i=1;
 for c = 1:nCycles
@@ -121,6 +130,18 @@ for c = 1:nCycles
     % breathing rate
     cycleLength = phasesWithNoise(1,c) - (thisInhalePauseLength+thisExhalePauseLength);
     
+    % if pauses are longer than the time alloted for this breath, set them
+    % to 0 so a real breath can be simulated. This will deviate the
+    % statistics from those initialized but is unavoidable at the current 
+    % state.
+    if cycleLength <= 0 || cycleLength < min(phasesWithNoise)/4
+        thisInhalePauseLength=0;
+        thisInhalePause=[];
+        thisExhalePauseLength=0;
+        thisExhalePause = [];
+        cycleLength = phasesWithNoise(1,c) - (thisInhalePauseLength+thisExhalePauseLength);
+    end
+    
     % compute inhale and exhale of this cycle.
     thisCycle = sin(linspace(0, 2*pi, cycleLength)) ...
         * amplitudesWithNoise(1, c);
@@ -130,16 +151,39 @@ for c = 1:nCycles
     thisExhale = thisCycle(halfCycle+1:end);
     thisExhaleLength=length(thisExhale);
     
-    % save these parameters for checking
-    inhaleLengths(1,c) = thisInhaleLength/srate;
-    inhalePauseLengths(1,c) = thisInhalePauseLength/srate;
-    exhaleLengths(1,c) = thisExhaleLength/srate;
-    exhalePauseLengths(1,c) = thisExhalePauseLength/srate;
-    inhaleOnsets(1,c) = i/srate;
-    exhaleOnsets(1,c) = (i + thisInhaleLength + thisInhalePauseLength)/srate;
     
-    % append it to simulated resperation vector
+    
+    % save these parameters for checking
+    inhaleLengths(1,c) = thisInhaleLength;
+    inhalePauseLengths(1,c) = thisInhalePauseLength;
+    exhaleLengths(1,c) = thisExhaleLength;
+    exhalePauseLengths(1,c) = thisExhalePauseLength;
+    inhaleOnsets(1,c) = i;
+    exhaleOnsets(1,c) = i + thisInhaleLength + thisInhalePauseLength;
+    
+    if thisInhalePause
+        inhalePauseOnsets(1,c) = i+thisInhaleLength;
+    else
+        inhalePauseOnsets(1,c) = nan;
+    end
+    
+    if thisExhalePause
+        exhalePauseOnsets(1,c) = i + thisInhaleLength + ...
+            thisInhalePauseLength + thisExhaleLength;
+    else
+        exhalePauseOnsets(1,c) = nan;
+    end
+    
+    % compose breath from parameters
     thisBreath = [thisInhale, thisInhalePause, thisExhale, thisExhalePause];
+    
+    % compute max flow for inhale and exhale for this breath
+    [~,maxInd] = max(thisBreath);
+    [~,minInd] = min(thisBreath);
+    inhalePeaks(1,c) = i+maxInd;
+    exhaleTroughs(1,c) = i+minInd;
+    
+    % append breath to simulated resperation vector
     simulatedRespiration(1, i:i+length(thisBreath) - 1) = thisBreath;
     i = i + length(thisBreath) - 1;
 end
@@ -157,19 +201,27 @@ simulatedRespiration = (simulatedRespiration * (1-signalNoise)) + (noiseVector *
 params1KeySet= {
     'Inhale Onsets';
     'Exhale Onsets';
+    'Inhale Pause Onsets';
+    'Exhale Pause Onsets';
     'Inhale Lengths';
     'Inhale Pause Lengths';
     'Exhale Lengths';
     'Exhale Pause Lengths';
+    'Inhale Peaks';
+    'Exhale Troughs';
     };
 
 params1ValueSet={
     inhaleOnsets; 
-    exhaleOnsets; 
-    inhaleLengths;
-    inhalePauseLengths;
-    exhaleLengths;
-    exhalePauseLengths;
+    exhaleOnsets;
+    inhalePauseOnsets; 
+    exhalePauseOnsets;
+    inhaleLengths/srate;
+    inhalePauseLengths/srate;
+    exhaleLengths/srate;
+    exhalePauseLengths/srate;
+    inhalePeaks;
+    exhaleTroughs;
     };
 
 params1 = containers.Map(params1KeySet,params1ValueSet);
@@ -194,13 +246,13 @@ if isempty(avgExhalePauseLength)
         avgExhalePauseLength=0;
 end
 
-estimatedBreathingRate = 1/mean(diff(inhaleOnsets));
+estimatedBreathingRate = (1/mean(diff(inhaleOnsets)))*srate;
 params2ValueSet={
     estimatedBreathingRate
-    mean(inhaleLengths); 
-    avgInhalePauseLength;
-    mean(exhaleLengths);
-    avgExhalePauseLength;
+    mean(inhaleLengths/srate); 
+    avgInhalePauseLength/srate;
+    mean(exhaleLengths/srate);
+    avgExhalePauseLength/srate;
     };
 
 params2 = containers.Map(params2KeySet,params2ValueSet);

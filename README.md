@@ -1,4 +1,5 @@
 # BreathMetrics
+### Version 1.0 3/23/2018
 BreathMetrics is a Matlab toolbox for algorithmic feature extraction of human respiratory flow data developed by a team at the Northwestern Human Neuroscience Lab, led by Dr. Christina Zelano.
 
 BreathMetrics has functions to extract features such as times of breath onsets, volumes of individual breaths, and pauses in breathing, as well as summary statistics such as breathing rate, minute ventilation, and tidal volume. These features can also be visualized in several ways.
@@ -10,7 +11,7 @@ BreathMetrics has functions to extract features such as times of breath onsets, 
 <img src="img/readme_class_output.png" width="400" />
 
 
-#### Visualizing Features Calculated Using BreathMetrics 
+#### Visualizing Features Calculated Using BreathMetrics
 
 <img src="img/readme_visualization.png" width="800" />
 
