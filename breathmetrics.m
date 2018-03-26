@@ -530,14 +530,19 @@ classdef breathmetrics < handle
             % plot compositions of breaths. Use 'raw', 'normalized', or
             % 'line' as inputs
             
-            if nargin < 2
-                disp(['No plot type entered. Use ''raw'', ' ...
-                    '''normalized'', or ''line'' to specify.']);
-                disp('Proceeding using ''raw''');
-                plotType='raw';
+            if strcmp(bm.dataType,'human')
+                if nargin < 2
+                    disp(['No plot type entered. Use ''raw'', ' ...
+                        '''normalized'', or ''line'' to specify.']);
+                    disp('Proceeding using ''raw''');
+                    plotType='raw';
+                end
+
+                fig = plotBreathCompositions(bm, plotType);
+            else
+                disp(['This function depends on breath lengths which ' ...
+                'is not supported at this time for rodent data.']);
             end
-            
-            fig = plotBreathCompositions(bm, plotType);
         end
         
         function fig = plotRespiratoryERP(bm,simpleOrResampled)
