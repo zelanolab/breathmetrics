@@ -38,7 +38,7 @@ if ~isempty(Bm.exhaleOnsets)
 end
 
 if ~ isempty(Bm.inhalePauseOnsets)
-    paramsToPlot{i} = Bm.inhalePauseOnsets(Bm.exhalePauseOnsets > 0);
+    paramsToPlot{i} = Bm.inhalePauseOnsets(Bm.inhalePauseOnsets > 0);
     paramLabels{i} = 'Inhale Pauses';
     i=i+1;
 end

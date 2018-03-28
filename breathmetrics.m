@@ -235,6 +235,9 @@ classdef breathmetrics < handle
             % Identifying pauses in data with different sampling rates
             % require different binning criteria to identify pauses.
             nBINS=floor(bm.srate/100);
+            if nBINS<=20
+                nBINS=20;
+            end
     
             [theseInhaleOnsets, theseExhaleOnsets, ...
                 theseInhalePauseOnsets, theseExhalePauseOnsets] = ...

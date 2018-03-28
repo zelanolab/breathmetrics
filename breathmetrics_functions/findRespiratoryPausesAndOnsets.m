@@ -13,6 +13,7 @@ function [ inhaleOnsets, exhaleOnsets, inhalePauseOnsets, ...
 %   6. Find exhale onset in peak-to-trough window where it crosses baseline.
 %   7. Repeat.
 
+%keyboard
 % Assume that there is exactly one onset per breath
 inhaleOnsets = zeros(1, length(myPeaks));
 exhaleOnsets = zeros(1, length(myPeaks));
@@ -31,7 +32,7 @@ if nargin<4
     nBINS = 100;
 end
     
-if nBINS == 100
+if nBINS >= 100
     maxPauseBins=5;
 else
     maxPauseBins=2;
