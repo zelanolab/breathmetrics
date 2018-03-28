@@ -74,13 +74,15 @@ classdef breathmetrics < handle
             % mean smoothing window is different for rodents and humans
             if strcmp(dataType,'human')
                 smoothWinsize = 50; 
-            elseif strcmp(dataType, 'rodent')
+            elseif strcmp(dataType, 'rodentThermocouple')
                 smoothWinsize = 10;
                 disp(['Notice: Only certain features can be derived ' ...
-                    'from rodent data'])
+                    'from rodent thermocouple data'])
+            elseif strcmp(dataType, 'rodentAirflow')
+                smoothWinsize = 10;
             else
-                disp(['Data type not recognized. Please use ''human'' ' ...
-                    'or ''rodent'' to specify'])
+                disp(['Data type not recognized. Please use ''human'',' ...
+                    ' ''rodentThermocouple'' or ''rodentAirflow'' to specify'])
                 smoothWinsize = 50;
             end
             
@@ -195,7 +197,9 @@ classdef breathmetrics < handle
             if strcmp(bm.dataType, 'human')
                 [putativePeaks, putativeTroughs] = ...
                     findRespiratoryExtrema( thisResp, bm.srate );
-            elseif strcmp(bm.dataType, 'rodent')
+            % same extrema finding for thermocouple and airflow recordings
+            % in rodents
+            elseif strfind(bm.dataType, 'rodent')==1
                 srateAdjust = bm.srate/1000;
                 rodentSWSizes = [floor(5*srateAdjust), ...
                     floor(10 * srateAdjust), floor(20 * srateAdjust), ...
@@ -215,7 +219,7 @@ classdef breathmetrics < handle
             % in rodent thermocouple recordings, the peaks and troughs 
             % represent inhales and exhales, not zero-crosses like in 
             % airflow recordings
-            if strcmp(bm.dataType,'rodent')
+            if strcmp(bm.dataType,'rodentThermocouple')
                 bm.inhaleOnsets = putativePeaks;
                 bm.exhaleOnsets = putativeTroughs;
             end
@@ -228,14 +232,10 @@ classdef breathmetrics < handle
                 verbose = 0;
             end
             thisResp = whichResp(bm, verbose);
-            
-            if bm.srate>100
-                nBINS=100;
-            else
-                % Identifying pauses in data with very low sampling rates
-                % requires different criteria to identify pauses.
-                nBINS=20;
-            end
+            % Identifying pauses in data with different sampling rates
+            % require different binning criteria to identify pauses.
+            nBINS=floor(bm.srate/10);
+    
             [theseInhaleOnsets, theseExhaleOnsets, ...
                 theseInhalePauseOnsets, theseExhalePauseOnsets] = ...
                 findRespiratoryPausesAndOnsets(thisResp, ...
@@ -324,7 +324,7 @@ classdef breathmetrics < handle
             if nargin < 4
                 verbose = 1;
             end
-            if strcmp(bm.dataType,'human')
+            if strcmp(bm.dataType,'human') || strcmp(bm.dataType,'rodentAirflow')
                 
                 bm.correctRespirationToBaseline(baselineCorrectionMethod, ...
                     zScore, verbose);
@@ -335,7 +335,7 @@ classdef breathmetrics < handle
                 bm.findInhaleAndExhaleVolumes(verbose);
                 bm.getSecondaryFeatures(verbose);
                 
-            elseif strcmp(bm.dataType,'rodent')
+            elseif strcmp(bm.dataType,'rodentThermocouple')
                 % only subset of features can be calculated in rodent
                 % thermocouple recordings.
                 bm.correctRespirationToBaseline(baselineCorrectionMethod, ...
@@ -360,10 +360,10 @@ classdef breathmetrics < handle
                 verbose=1;
             end
             if nargin < 3
-                rateEstimation = 'feature_derived';
+                rateEstimation = 'featureDerived';
             end
             
-            if strcmp(rateEstimation,'feature_derived')
+            if strcmp(rateEstimation,'featureDerived')
                 % breathing rate derived from breathing rate
                 filtCenter = bm.secondaryFeatures('Breathing Rate');
             elseif strcmp(rateEstimation, 'pspec')
@@ -530,7 +530,7 @@ classdef breathmetrics < handle
             % plot compositions of breaths. Use 'raw', 'normalized', or
             % 'line' as inputs
             
-            if strcmp(bm.dataType,'human')
+            if strcmp(bm.dataType,'human') || strcmp(bm.dataType,'rodentAirflow')
                 if nargin < 2
                     disp(['No plot type entered. Use ''raw'', ' ...
                         '''normalized'', or ''line'' to specify.']);
@@ -541,7 +541,7 @@ classdef breathmetrics < handle
                 fig = plotBreathCompositions(bm, plotType);
             else
                 disp(['This function depends on breath lengths which ' ...
-                'is not supported at this time for rodent data.']);
+                'is not supported at this time for rodent thermocouple data.']);
             end
         end
         

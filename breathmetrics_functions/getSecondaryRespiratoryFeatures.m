@@ -19,7 +19,7 @@ breathingRate = Bm.srate/mean(diff(Bm.inhalePeaks));
 % over the sampling rate
 interBreathInterval = mean(diff(Bm.inhalePeaks))/Bm.srate;
 
-if strcmp(Bm.dataType,'human')
+if strcmp(Bm.dataType,'human') || strcmp(Bm.dataType,'rodentAirflow')
     % exclude outlier breaths and calculate peak flow rates
     validInhaleFlows = Bm.peakInspiratoryFlows(Bm.peakInspiratoryFlows ...
         > mean(Bm.peakInspiratoryFlows) - 2 * std(Bm.peakInspiratoryFlows) ...
@@ -85,7 +85,7 @@ cvBreathingRate = std(diff(Bm.inhalePeaks))/mean(diff(Bm.inhalePeaks));
 
 
 % assigning values for output
-if strcmp(Bm.dataType,'human')
+if strcmp(Bm.dataType,'human') || strcmp(Bm.dataType,'rodentAirflow')
     keySet= {
         'Breathing Rate';
         'Average Inter-Breath Interval';
@@ -127,7 +127,7 @@ if strcmp(Bm.dataType,'human')
         cvBreathingRate; 
         CVTidalVolumes;
         };
-elseif strcmp(Bm.dataType,'rodent')
+elseif strcmp(Bm.dataType,'rodentThermocouple')
     keySet= {
         'Breathing Rate';
         'Average Inter-Breath Interval';
