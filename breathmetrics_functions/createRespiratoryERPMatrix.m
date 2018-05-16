@@ -1,7 +1,18 @@
-function [ERPMatrix,trialEvents,rejectedEvents] = createRespiratoryERPMatrix(data, events, ...
+function [ERPMatrix,trialEvents,rejectedEvents] = createRespiratoryERPMatrix(resp, eventArray, ...
     preSamples, postSamples, verbose)
+% Calculates an ERP matrix (events x time) for given events in respiratory 
+% data. Returns events used for ERP as well as events where a full ERP 
+% could not be calculated.
 
-% pre and post must both be positive.
+% PARAMETERS
+% resp : respiratory recording (1xN vector)
+% eventArray : indices of events to be used as onsets for the
+%              ERP
+% preSamples : number of samples before each event in eventArray to include
+%              in ERP calculation (must be positive).
+% postSamples : number of samples after each event in eventArray to include
+%              in ERP calculation.
+% verbose : 0 or 1 (default) : displays each step of this function
 
 if nargin<5
     verbose=1;
@@ -11,17 +22,17 @@ end
 trialEvents=[];
 rejectedEvents=[];
 iter=1;
-for event = 1:length(events)
-    EVENT_INDS = events(event)-preSamples:events(event) + postSamples;
-    if ~ (any(EVENT_INDS<1) || any(EVENT_INDS>size(data,2)))
-        trialEvents=[trialEvents,events(event)];
-        ERPMatrix(iter,:) = data(1,EVENT_INDS);
+for event = 1:length(eventArray)
+    EVENT_INDS = eventArray(event)-preSamples:eventArray(event) + postSamples;
+    if ~ (any(EVENT_INDS<1) || any(EVENT_INDS>size(resp,2)))
+        trialEvents=[trialEvents,eventArray(event)];
+        ERPMatrix(iter,:) = resp(1,EVENT_INDS);
         iter=iter+1;
     else
-        rejectedEvents=[rejectedEvents,events(event)];
+        rejectedEvents=[rejectedEvents,eventArray(event)];
         if verbose
             fprintf('Event #%i (%i) is outside of ERP range \n', ...
-                event, events(event));
+                event, eventArray(event));
         end
     end
 end

@@ -29,7 +29,7 @@ To reproduce the figures above, move to the breathmetrics directory and run:
 respiratoryData = load('sample_data.mat');
 respiratoryTrace = respiratoryData.resp;
 srate = respiratoryData.srate;
-dataType = 'human';
+dataType = 'humanAirflow';
 bm = breathmetrics(respiratoryTrace, srate, dataType);
 bm.estimateAllFeatures();
 fig = bm.plotCompositions('raw');
@@ -40,3 +40,8 @@ fig = bm.plotCompositions('line');
 
 ## Dependencies
 Matlab 2017b
+
+# This code is hosted publicly at https://github.com/zelanolab/breathmetrics and is supported by the following National Institutes of Health (NIDCD) grants:
+* R00-DC-012803
+* R01-DC-016364
+* T32-NS047987

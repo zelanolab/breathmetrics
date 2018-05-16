@@ -1,11 +1,19 @@
 function [inhaleVolumes,exhaleVolumes] = findRespiratoryVolumes(resp, ...
     srate, inhaleOnsets, exhaleOnsets, inhaleOffsets, exhaleOffsets)
 
-% estimates the volume of air displaced in all inhales and exhales
-% requires zero crosses
-% assumes peaks always come first
-% assumes respiration has been baseline corrected;
+% Estimates the volume of air displaced in all inhales and exhales by 
+% calculating the integral of each breath.
+% Only valid for airflow data and requires that respiration has been 
+% baseline corrected and that inhale onsets and offsets have been 
+% computed.
 
+% PARAMETERS:
+% resp: respiratory trace (1xN vector)
+% srate: sampling rate
+% inhaleOnsets: inhale onsets
+% inhaleOffsets: inhale offsets
+% exhaleOnsets: exhale onsets
+% exhaleOffsets: exhale offsets
 
 inhaleVolumes = zeros(1,length(inhaleOnsets));
 exhaleVolumes = zeros(1,length(exhaleOnsets));

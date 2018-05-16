@@ -1,10 +1,38 @@
-function [simulatedRespiration, params1, params2] = simulateRespiratoryData(nCycles, srate, ...
+function [simulatedRespiration, rawFeatures, featureStats] = simulateRespiratoryData(nCycles, srate, ...
     breathingRate, averageAmplitude, amplitudeVariance, phaseVariance, ...
     inhalePausePct, inhalePauseAvgLength, inhalePauseLengthVariance, ...
     exhalePausePct, exhalePauseAvgLength, exhalePauseLengthVariance, ...
     pauseAmplitude, pauseAmplitudeVariance, signalNoise)
 
-% bug if phase variance is too high
+% Simulates a recording of human airflow data according to the
+% specified parameters by appending individually constructed sin waves and 
+% pauses in sequence.
+% Because some of these features are statistical, the resultant simulation
+% may deviate slightly from the desired input.
+% Many parameters interact so errors may occur if extreme values are used.
+
+% PARAMETERS: 
+% nCycles : number of breathing cycles to simulate
+% srate : sampling rate
+% breathingRate : average breathing rate
+% averageAmplitude : average amplitude of inhales and exhales
+% amplitudeVariance : variance in respiratory amplitudes
+% phaseVariance : variance in duration of individual breaths, ...
+% inhalePausePct : percent of inhales followed by a pause
+% inhalePauseAvgLength : average length of inhale pauses
+% inhalePauseLengthVariance : variance in inhale pause length
+% exhalePausePct : percent of exhales followed by a pause
+% exhalePauseAvgLength : average length of exhale pauses
+% exhalePauseLengthVariance : variance in exhale pause length
+% pauseAmplitude : noise amplitude of pauses
+% pauseAmplitudeVariance : variance in pause noise
+% signalNoise : percent of noise saturation in the simulated signal
+
+% RETURNS:
+% simulatedRespiration : simulated respiratory signal
+% rawFeatures : indices and durations of each breath onset, peak, and pause
+% featureStats : statistics features embeded in simulatedRespiration
+
 if nargin < 1
     nCycles = 100; % 
 end
@@ -224,7 +252,7 @@ params1ValueSet={
     exhaleTroughs;
     };
 
-params1 = containers.Map(params1KeySet,params1ValueSet);
+rawFeatures = containers.Map(params1KeySet,params1ValueSet);
 
 params2KeySet= {
     'Breathing Rate';
@@ -255,7 +283,7 @@ params2ValueSet={
     avgExhalePauseLength/srate;
     };
 
-params2 = containers.Map(params2KeySet,params2ValueSet);
+featureStats = containers.Map(params2KeySet,params2ValueSet);
 
 end
     

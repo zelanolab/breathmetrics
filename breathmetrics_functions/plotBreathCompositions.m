@@ -1,4 +1,19 @@
 function [fig] = plotBreathCompositions(Bm, plotType)
+% plots the compositions of all breaths in Bm object.
+
+% PARAMETERS: 
+% bm : BreathMetrics class object
+% plotType : 'raw' : images the composition of each breath,
+%                    leaving extra space for all breaths 
+%                    shorter than the longest in duration
+%            'normalized' : images the composition of each
+%                           breath, normalized by its duration.
+%            'line' : Plots each breath as a line where the x-
+%                     value represents phase and the y-value
+%                     represents duration of phase
+
+% returns the figure produced
+
     
 MATRIX_SIZE = 1000;
 nBreaths = length(Bm.inhaleOnsets);

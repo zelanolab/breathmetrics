@@ -19,7 +19,7 @@ breathingRate = Bm.srate/mean(diff(Bm.inhalePeaks));
 % over the sampling rate
 interBreathInterval = mean(diff(Bm.inhalePeaks))/Bm.srate;
 
-if strcmp(Bm.dataType,'human') || strcmp(Bm.dataType,'rodentAirflow')
+if strcmp(Bm.dataType,'humanAirflow') || strcmp(Bm.dataType,'rodentAirflow')
     % exclude outlier breaths and calculate peak flow rates
     validInhaleFlows = Bm.peakInspiratoryFlows(Bm.peakInspiratoryFlows ...
         > mean(Bm.peakInspiratoryFlows) - 2 * std(Bm.peakInspiratoryFlows) ...
@@ -77,6 +77,7 @@ if strcmp(Bm.dataType,'human') || strcmp(Bm.dataType,'rodentAirflow')
     % coefficient of variation in breath size describes variability of breath
     % sizes
     CVTidalVolumes = std(validInhaleVolumes)/mean(validInhaleVolumes);
+    
 end
 
 % coefficient of variation of breathing rate describes variability in time
@@ -85,7 +86,7 @@ cvBreathingRate = std(diff(Bm.inhalePeaks))/mean(diff(Bm.inhalePeaks));
 
 
 % assigning values for output
-if strcmp(Bm.dataType,'human') || strcmp(Bm.dataType,'rodentAirflow')
+if strcmp(Bm.dataType,'humanAirflow') || strcmp(Bm.dataType,'rodentAirflow')
     keySet= {
         'Breathing Rate';
         'Average Inter-Breath Interval';
@@ -127,7 +128,7 @@ if strcmp(Bm.dataType,'human') || strcmp(Bm.dataType,'rodentAirflow')
         cvBreathingRate; 
         CVTidalVolumes;
         };
-elseif strcmp(Bm.dataType,'rodentThermocouple')
+elseif strcmp(Bm.dataType,'humanBB') || strcmp(Bm.dataType,'rodentThermocouple') 
     keySet= {
         'Breathing Rate';
         'Average Inter-Breath Interval';

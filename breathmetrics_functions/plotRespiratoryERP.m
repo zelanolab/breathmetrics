@@ -24,5 +24,6 @@ title(TITLE_TEXT)
 plot(xAxis, ERPMatrix', 'b');
 plot(xAxis, mean(ERPMatrix), 'LineWidth', 5, 'Color', 'k');
 xlabel(XLABEL_TEXT)
+ylabel('Airflow');
 
 end

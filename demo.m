@@ -36,20 +36,22 @@ signalNoise = 0; % proportion of signal that is noise [0,1]
     inhalePausePct, inhalePauseAvgLength, inhalePauseLengthVariance, ...
     exhalePausePct, exhalePauseAvgLength, exhalePauseLengthVariance, ...
     pauseAmplitude, pauseAmplitudeVariance, signalNoise);
-dataType = 'human';
+dataType = 'humanAirflow';
 
 %% Load sample data for analysis
 respiratoryData = load('sample_data.mat');
 respiratoryTrace = respiratoryData.resp;
 srate = respiratoryData.srate;
-dataType = 'human';
+dataType = 'humanAirflow';
 
 %%
 % All analyses are done with the breathmetrics class.
 % It requires three inputs:
 % 1. A vector of respirometer data 
 % 2. A sampling rate
-% 3. A data type: 'human' is the only kind that currently works
+% 3. A data type: 'humanAirflow' has been rigerously validated but 
+% 'humanBB', 'rodentAirflow', and 'rodentThermocouple' data types are also
+% supported.
 
 
 % initialize class
@@ -124,11 +126,12 @@ bm.findExtrema(verbose);
 % similarly, the peak inspiratory and expiratory flow can be accessed at 
 % bm.peakInspiratoryFlows and bm.troughExpiratoryFlows
 
-% points where the first 10 inhale peaks occur
-disp(bm.inhalePeaks(1:10))
+nPlot=10;
+% points where the first nPlot inhale peaks occur
+disp(bm.inhalePeaks(1:nPlot))
 
 % flow value at those peaks
-disp(bm.peakInspiratoryFlows(1:10))
+disp(bm.peakInspiratoryFlows(1:nPlot))
 
 
 % NOTE: To standardize data, inhales always occur before exhales.
@@ -162,8 +165,9 @@ ylabel('Respiratory Flow');
 %% 2.2 estimate inhale and exhale onsets, and pauses
 bm.findOnsetsAndPauses(verbose);
 
-% first 10 inhale onsets
-disp(bm.inhaleOnsets(1:10));
+nPlot=10;
+% first nPlot inhale onsets
+disp(bm.inhaleOnsets(1:nPlot));
 
 % NOTE: each breath onset is indexed at the peak of the same breath.
 % i.e. bm.inhaleOnsets(k) is the same breath as bm.inhalePeaks(k).
@@ -349,9 +353,9 @@ fig = bm.plotFeatures(annotations{5});
 
 % these can be visualized in three ways: 'raw', 'normalized', or 'line'
 
-fig = bm.plotCompositions('raw');
-fig = bm.plotCompositions('normalized');
-fig = bm.plotCompositions('line');
+fig1 = bm.plotCompositions('raw');
+fig2 = bm.plotCompositions('normalized');
+fig3 = bm.plotCompositions('line');
 
 
 

@@ -1,9 +1,13 @@
 function [fig] = plotRespiratoryFeatures( Bm, annotate, sizeData)
 % Plots respiration as well as any respiratory features that have been
 % estimated
-% annotate is a cell of features you wish to plot. Options are:
+% PARAMETERS:
+% bm : BreathMetrics class object
+% annotate : features to plot. Options are: 
 % 'extrema', 'onsets','maxflow','volumes', and 'pauses'
-%keyboard
+% sizeData : size of feature labels. Helpful for visualizing 
+% features in data of different window sizes.
+
 if nargin < 3
     sizeData = 36;
 end
@@ -13,16 +17,20 @@ paramLabels = {};
 i=1;
 
 % plot all params that have been calculated
-if ~isempty(Bm.inhalePeaks)
-    paramsToPlot{i} = Bm.inhalePeaks;
-    paramLabels{i} = 'Inhale Peaks';
-    i=i+1;
+if ~isempty(Bm.inhalePeaks) 
+    if strcmp(Bm.dataType,'humanAirflow') || strcmp(Bm.dataType,'rodentAirflow')
+        paramsToPlot{i} = Bm.inhalePeaks;
+        paramLabels{i} = 'Inhale Peaks';
+        i=i+1;
+    end
 end
 
 if ~isempty(Bm.exhaleTroughs)
-    paramsToPlot{i} = Bm.exhaleTroughs;
-    paramLabels{i} = 'Exhale Troughs';
-    i=i+1;
+    if strcmp(Bm.dataType,'humanAirflow') || strcmp(Bm.dataType,'rodentAirflow')
+        paramsToPlot{i} = Bm.exhaleTroughs;
+        paramLabels{i} = 'Exhale Troughs';
+        i=i+1;
+    end
 end
 
 if ~isempty(Bm.inhaleOnsets)
@@ -64,7 +72,15 @@ allHandles = [respiratoryHandle];
 legendText = {'Respiration'};
 
 xlabel('Time (seconds)');
-ylabel('Respiratory Flow (AU)');
+
+% different data types have different axes
+if strcmp(Bm.dataType,'humanAirflow') || strcmp(Bm.dataType,'rodentAirflow')
+    ylabel('Airflow (AU)');
+elseif strcmp(Bm.dataType,'humanBB')
+    ylabel('Breathing Belt (AU)');
+elseif strcmp(Bm.dataType,'rodentThermocouple')
+    ylabel('Thermocouple (AU)')
+end
 if ~isempty(paramsToPlot)
     MY_COLORS = parula(length(paramsToPlot));
     for paramInd=1:length(paramsToPlot)
@@ -108,19 +124,24 @@ if ~isempty(annotate)
     end
     % annotate information about airflow if it have been calculated
     if sum(strcmp(annotate, 'maxflow')) > 0
-        if ~isempty(Bm.inhalePeaks) && ~isempty(Bm.exhaleTroughs)
-            for i=1:length(Bm.inhalePeaks)
-                peakAnnotations{i} = sprintf('%s%s\n', ...
-                    peakAnnotations{i}, sprintf(' Max Flow: %.2g', ...
-                    Bm.peakInspiratoryFlows(i)));
-            end
-            for e=1:length(Bm.exhaleTroughs)
-                troughAnnotations{e} = sprintf('%s%s\n', ...
-                    troughAnnotations{e}, sprintf(' Max Flow: %.2g', ...
-                    Bm.troughExpiratoryFlows(e)));
+        if strcmp(bm.dataType,'humanAirflow') || strcmp(bm.dataType,'rodentAirflow')
+            if ~isempty(Bm.inhalePeaks) && ~isempty(Bm.exhaleTroughs)
+                for i=1:length(Bm.inhalePeaks)
+                    peakAnnotations{i} = sprintf('%s%s\n', ...
+                        peakAnnotations{i}, sprintf(' Max Flow: %.2g', ...
+                        Bm.peakInspiratoryFlows(i)));
+                end
+                for e=1:length(Bm.exhaleTroughs)
+                    troughAnnotations{e} = sprintf('%s%s\n', ...
+                        troughAnnotations{e}, sprintf(' Max Flow: %.2g', ...
+                        Bm.troughExpiratoryFlows(e)));
+                end
+            else
+                disp('Max flow at breath extrema have not been calculated.')
             end
         else
-            disp('Max flow at breath extrema have not been calculated.')
+            disp(['Max flow cannot be calculated for human breathing' ...
+                  'belt or rodent thermocouple data.']);
         end
     end
 
@@ -205,11 +226,11 @@ end
 if ~isempty(inhaleOnsetAnnotations) && ~isempty(exhaleOnsetAnnotations)
     for i=1:length(Bm.inhaleOnsets)
         text(xAxis(Bm.inhaleOnsets(i)), ...
-            respiratoryTrace(Bm.inhaleJOnsets(i)), ...
+            respiratoryTrace(Bm.inhaleOnsets(i)), ...
             inhaleOnsetAnnotations{i});
     end
     for e=1:length(Bm.exhaleOnsets)
-        text(xAxis(Bm.exhalePnsets(e)), ...
+        text(xAxis(Bm.exhaleOnsets(e)), ...
             respiratoryTrace(Bm.exhaleOnsets(e)), ...
             exhaleOnsetAnnotations{e});
     end
