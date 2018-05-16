@@ -1,5 +1,7 @@
 # BreathMetrics
-### Version 1.0 3/23/2018
+### Version 1.0 
+### 3/23/2018
+
 BreathMetrics is a Matlab toolbox for algorithmic extraction of the full set of features in human respiratory flow recordings as well as a subset of respiratory features in rodent thermocouple recordings.
 
 Breathmetrics has been developed by a team at the Northwestern Human Neuroscience Lab, led by Dr. Christina Zelano.
@@ -41,7 +43,7 @@ fig = bm.plotCompositions('line');
 ## Dependencies
 Matlab 2017b
 
-# This code is hosted publicly at https://github.com/zelanolab/breathmetrics and is supported by the following National Institutes of Health (NIDCD) grants:
+### This code is hosted publicly at https://github.com/zelanolab/breathmetrics and is supported by the following National Institutes of Health (NIDCD) grants:
 * R00-DC-012803
 * R01-DC-016364
 * T32-NS047987
