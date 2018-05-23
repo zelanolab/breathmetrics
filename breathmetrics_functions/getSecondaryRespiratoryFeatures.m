@@ -13,11 +13,11 @@ end
 
 % breathing rate is the sampling rate over the average number of samples in
 % between breaths
-breathingRate = Bm.srate/mean(diff(Bm.inhalePeaks));
+breathingRate = Bm.srate/mean(diff(Bm.inhaleOnsets));
 
 % inter-breath interval is the average number of samples between breaths
 % over the sampling rate
-interBreathInterval = mean(diff(Bm.inhalePeaks))/Bm.srate;
+interBreathInterval = mean(diff(Bm.inhaleOnsets))/Bm.srate;
 
 if strcmp(Bm.dataType,'humanAirflow') || strcmp(Bm.dataType,'rodentAirflow')
     % exclude outlier breaths and calculate peak flow rates
@@ -82,7 +82,7 @@ end
 
 % coefficient of variation of breathing rate describes variability in time
 % between breaths
-cvBreathingRate = std(diff(Bm.inhalePeaks))/mean(diff(Bm.inhalePeaks));
+cvBreathingRate = std(diff(Bm.inhaleOnsets))/mean(diff(Bm.inhaleOnsets));
 
 
 % assigning values for output

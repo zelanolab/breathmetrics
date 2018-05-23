@@ -246,20 +246,36 @@ classdef breathmetrics < handle
                     findRespiratoryExtrema( thisResp, bm.srate, ...
                     0, rodentSWSizes );
             end
-            % indices of extrema
-            bm.inhalePeaks = putativePeaks;
-            bm.exhaleTroughs = putativeTroughs;
             
-            % values of extrema
-            bm.peakInspiratoryFlows = thisResp(putativePeaks);
-            bm.troughExpiratoryFlows = thisResp(putativeTroughs);
+            % The extrema represent the peak flow rates of inhales and 
+            % exhales only in airflow recordings.
+            if strcmp(bm.dataType,'humanAirflow') || strcmp(bm.dataType,'rodentAirflow')
+                % indices of extrema
+                bm.inhalePeaks = putativePeaks;
+                bm.exhaleTroughs = putativeTroughs;
+
+                % values of extrema
+                bm.peakInspiratoryFlows = thisResp(putativePeaks);
+                bm.troughExpiratoryFlows = thisResp(putativeTroughs);
+            end
             
-            % in human breathing belt and rodent thermocouple recordings, 
-            % the peaks and troughs represent exhale and inhale onsets,
-            % respectively, unlike zero-crosses like in airflow recordings
-            if strcmp(bm.dataType,'rodentThermocouple') || strcmp(bm.dataType,'humanBB')
+            % In human breathing belt recordings, the peaks and troughs 
+            % represent exhale and inhale onsets, respectively, because the
+            % point where volume has maximized and instantaneously
+            % decreases demarcates an exhale. This is unlike zero-crosses 
+            % which demarcate breath onsets in airflow recordings.
+            if strcmp(bm.dataType,'humanBB')
                 bm.inhaleOnsets = putativeTroughs;
                 bm.exhaleOnsets = putativePeaks;
+            
+            % In rodent thermocouple recordings, the peaks and troughs 
+            % represent inhale and exhale onsets, respectively. Inhales
+            % decrease the temperature in the nose and the onset is
+            % demarcated by the first point this happens - the inflection
+            % point of the peaks. Visa versa for exhales.
+            elseif strcmp(bm.dataType,'rodentThermocouple')
+                bm.inhaleOnsets = putativePeaks;
+                bm.exhaleOnsets = putativeTroughs;
             end
         end
         
