@@ -1,5 +1,6 @@
 classdef breathmetrics < handle 
-    % VERSION: 0.2 5/16/2018
+    % VERSION: 1.0 5/25/2018 
+    % Created by The Zelano Lab
     % This class takes in a respiratory trace and sampling rate and
     % contains methods for analysis and visualization of several features
     % of respiration that can be derived. See help in individual methods for
