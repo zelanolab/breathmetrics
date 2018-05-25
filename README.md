@@ -42,6 +42,7 @@ fig = bm.plotCompositions('line');
 
 ## Dependencies:
 Matlab 2017b
+
 Extracting instantaneus phase depends on the Matlab signal processing toolbox but functionality should not be affected otherwise
 
 ## This toolbox is maintained by the following people:
