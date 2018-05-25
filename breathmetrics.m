@@ -105,8 +105,11 @@ classdef breathmetrics < handle
             % de-noise data
             srateCorrectedSmoothedWindow = ...
                 floor((srate/1000) * smoothWinsize);
+            % smooth.m works but depends on signal processing toolbox
+            % this custom smoothing method isn't dependant and differences
+            % are almost indecernable.
             Bm.smoothedRespiration = ...
-                smooth(resp, srateCorrectedSmoothedWindow)';
+                fftSmooth(resp, srateCorrectedSmoothedWindow)';
             
             % time is like fieldtrip. All events are indexed by point in
             % time vector.
