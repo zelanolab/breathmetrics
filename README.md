@@ -50,7 +50,7 @@ Extracting instantaneus phase depends on the Matlab signal processing toolbox bu
 * Christina Zelano
 
 ## Thanks to the following collaborators who contributed code and data:
-* Johan Lundstrom (Code)
+* Behzad Iravani & Johan Lundstrom (Code)
 * Minghong Ma (Rodent Data)
 * Andrew Moberly (Rodent Data)
 * Leslie Kay (Rodent Data)
