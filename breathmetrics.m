@@ -45,6 +45,9 @@ classdef breathmetrics < handle
         resampledERPxAxis
         trialEvents
         rejectedEvents
+        trialEventInds
+        rejectedEventInds
+        featureEstimationsComplete
     end
    
     methods
@@ -75,6 +78,7 @@ classdef breathmetrics < handle
             Bm.rawRespiration=resp;
             Bm.srate = srate;
             Bm.dataType = dataType;
+            Bm.featureEstimationsComplete=0;
             
             % mean smoothing window is different for rodents and humans
             if strcmp(dataType,'humanAirflow')
@@ -378,6 +382,7 @@ classdef breathmetrics < handle
             end
             respStats  = getSecondaryRespiratoryFeatures( bm, verbose );
             bm.secondaryFeatures = respStats;
+            bm.checkFeatureEstimations();
         end
         
         function dispSecondaryFeatures(bm)
@@ -392,6 +397,50 @@ classdef breathmetrics < handle
             end
         end
         
+        function bm = checkFeatureEstimations(bm)
+            % checks whether each feature has been estimated
+            % sets bm.featureEstimationsComplete to 1 if this is true
+            
+            airflowCompleteFeatureSet={
+                'baselineCorrectedRespiration';'inhalePeaks';
+                'exhaleTroughs';'peakInspiratoryFlows';
+                'troughExpiratoryFlows';'inhaleOnsets';
+                'exhaleOnsets';'inhaleOffsets';
+                'exhaleOffsets';'inhaleVolumes';
+                'exhaleVolumes';'inhaleLengths';
+                'exhaleLengths';'inhalePauseOnsets';
+                'inhalePauseLengths';'exhalePauseOnsets';
+                'exhalePauseLengths';'secondaryFeatures'};
+            
+            otherSignalCompleteFeatureSet={
+                'baselineCorrectedRespiration';'inhalePeaks';
+                'exhaleTroughs';'secondaryFeatures'};
+            
+            
+            if strcmp(bm.dataType,'humanAirflow') || strcmp(bm.dataType,'rodentAirflow')
+                thisFeatureSet = airflowCompleteFeatureSet;
+            elseif strcmp(bm.dataType,'humanBB') || strcmp(bm.dataType,'rodentThermocouple')
+                thisFeatureSet = otherSignalCompleteFeatureSet;
+            else
+                disp('This data type is not recognized.');
+                thisFeatureSet=[];
+            end
+            
+            nMissingFeatures=0;
+            for i = 1:length(thisFeatureSet)
+                thisFeature=thisFeatureSet{i};
+                if isempty(bm.(thisFeature))
+                    nMissingFeatures=nMissingFeatures+1;
+                    fprintf('\n Feature: %s has not been calculated \n',thisFeature);
+                end
+            end
+            
+            if nMissingFeatures == 0
+                bm.featureEstimationsComplete=1;
+            end
+            
+        end
+            
         function bm = estimateAllFeatures( bm, zScore, ...
                 baselineCorrectionMethod, verbose )
             % Calls methods above to estimate all features of respiration 
@@ -438,6 +487,7 @@ classdef breathmetrics < handle
                 bm.findExtrema(verbose);
                 bm.getSecondaryFeatures(verbose);
             end
+            bm = bm.checkFeatureEstimations();
         end
         
         function bm = calculateRespiratoryPhase(bm, myFilter, ...
@@ -509,12 +559,13 @@ classdef breathmetrics < handle
             filteredResp = filtfilt(myFilter, thisResp);
             % calculate instantaneus phase with the angle of the hilbert
             % transformed data.
-            bm.respPhase = angle(hilbert(filteredResp));
+            bm.respiratoryPhase = angle(hilbert(filteredResp));
         end
         
         %%% Event Related Potential (ERP) methods %%%
         
-        function bm = calculateERP( bm, eventArray , pre, post, verbose)
+        function bm = calculateERP( bm, eventArray , pre, post, ...
+                appendNaNs,verbose)
             % Calculates an event related potential (ERP) of the 
             % respiratory trace 'pre' and 'post' milliseconds before and 
             % after time indices in eventArray, excluding events where a 
@@ -534,7 +585,10 @@ classdef breathmetrics < handle
             %           function
             
             if nargin<5
-                verbose=1;
+                appendNaNs=0;
+            end
+            if nargin<6
+                verbose=0;
             end
             
             thisResp = whichResp(bm);
@@ -544,8 +598,8 @@ classdef breathmetrics < handle
             preSamples = round(pre * toRealMs);
             postSamples = round(post * toRealMs);
 
-            [thisERPMatrix,theseTrialEvents,theseRejectedEvents] = createRespiratoryERPMatrix( thisResp, ...
-                eventArray, preSamples, postSamples, verbose );
+            [thisERPMatrix,theseTrialEvents,theseRejectedEvents,theseTrialEventInds,theseRejectedEventInds] = createRespiratoryERPMatrix( thisResp, ...
+                eventArray, preSamples, postSamples, appendNaNs, verbose );
             srateStep = 1000 / bm.srate;
             
             % if sampling rate is a float, x axis can mismatch. Following
@@ -562,10 +616,12 @@ classdef breathmetrics < handle
             bm.ERPMatrix = thisERPMatrix;
             bm.trialEvents = theseTrialEvents;
             bm.rejectedEvents=theseRejectedEvents;
+            bm.trialEventInds = theseTrialEventInds;
+            bm.rejectedEventInds=theseRejectedEventInds;
         end
         
         function bm = calculateResampledERP(bm, eventArray, prePct, ...
-                postPct, resampleSize, verbose)
+                postPct, resampleSize, appendNaNs, verbose)
             % Calculates an event related potential (ERP) of the 
             % respiratory trace resampled by the average breathing rate to 
             % a length of 'resampleSize' at each event in eventArray.
@@ -588,9 +644,15 @@ classdef breathmetrics < handle
             % verbose : 0 or 1 (default) : displays each step of this
             %           function
             
-            if nargin < 6
+            if nargin < 7
                 verbose=1;
             end
+            
+            if nargin < 6
+                % resample the erp window by this many points
+                appendNaNs=0;
+            end
+            
             if nargin < 5
                 % resample the erp window by this many points
                 resampleSize=2000;
@@ -618,8 +680,8 @@ classdef breathmetrics < handle
             thisResp = whichResp(bm);
             
             % get times a full cycle before and after each event
-            [normalizedERP,theseTrialEvents,theseRejectedEvents] = createRespiratoryERPMatrix(thisResp, ...
-                eventArray, rsPre, rsPost, verbose);
+            [normalizedERP,theseTrialEvents,theseRejectedEvents,theseTrialEventInds,theseRejectedEventInds] = createRespiratoryERPMatrix(thisResp, ...
+                eventArray, rsPre, rsPost, appendNaNs, verbose);
             
             % resample this cycle into resampleSize points
             resampleInds=linspace(1, rsPre + rsPost + 1, resampleSize);
@@ -636,6 +698,8 @@ classdef breathmetrics < handle
             bm.resampledERPMatrix = thisResampledERPMatrix;
             bm.trialEvents = theseTrialEvents;
             bm.rejectedEvents=theseRejectedEvents;
+            bm.trialEventInds = theseTrialEventInds;
+            bm.rejectedEventInds=theseRejectedEventInds;
             
             bm.resampledERPxAxis = linspace(-prePct*100, ...
                 postPct*100, resampleSize);
@@ -716,6 +780,10 @@ classdef breathmetrics < handle
             
             fig = plotRespiratoryERP(thisERPMatrix, ...
                 xAxis, simpleOrResampled);
+        end
+        
+        function launchGUI(bm)
+            BreathMetricsGUI(bm);
         end
     end
 end

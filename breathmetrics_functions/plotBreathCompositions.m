@@ -3,19 +3,29 @@ function [fig] = plotBreathCompositions(Bm, plotType)
 
 % PARAMETERS: 
 % bm : BreathMetrics class object
-% plotType : 'raw' : images the composition of each breath,
+% plotType : 'raw' : Images the composition of each breath,
 %                    leaving extra space for all breaths 
 %                    shorter than the longest in duration
-%            'normalized' : images the composition of each
+%            'normalized' : Images the composition of each
 %                           breath, normalized by its duration.
 %            'line' : Plots each breath as a line where the x-
 %                     value represents phase and the y-value
 %                     represents duration of phase
+%            'hist' : Constructs histograms for durations of each phase
+%                     of every breath.
 
 % returns the figure produced
 
     
 MATRIX_SIZE = 1000;
+breathPhaseLabels = {'Inhales'; 'Inhale Pauses'; ...
+                     'Exhales'; 'Exhale Pauses'};
+customColors = [0 0.4470 0.7410; 
+                0.8500 0.3250 0.0980; 
+                0.9290 0.6940 0.1250; 
+                0.4940 0.1840 0.5560; 
+                1 1 1];
+            
 nBreaths = length(Bm.inhaleOnsets);
 
 if strcmp(plotType, 'normalized')
@@ -75,7 +85,9 @@ if strcmp(plotType, 'normalized')
     end
 
     % image
-    imagesc(breathMatrix)
+    colormap(customColors(1:4,:));
+    image(breathMatrix);
+    %imagesc(breathMatrix)
     xlim([0.5,MATRIX_SIZE + 0.5])
 
     % normalizing x ticks
@@ -91,11 +103,12 @@ if strcmp(plotType, 'normalized')
     xlabel('Proportion of Breathing Period')
     ylabel('Breath Number')
 
-    % colorbar
-    cb = colorbar('Location','NorthOutside'); 
-    caxis([1,4]) 
-    xTickLabels = {'Inhales'; 'Inhale Pauses'; 'Exhales'; 'Exhale Pauses'};
-    set(cb, 'XTick', [1,2,3,4], 'XTickLabel', xTickLabels)
+    % custom figure legend
+    h = zeros(4, 1);
+    for i=1:4
+        h(i) = plot(NaN,NaN,'color',customColors(i,:),'LineWidth',2);
+    end
+    legend(h,breathPhaseLabels)
 
 elseif strcmp(plotType,'raw')
     % plots length of each component of each breath
@@ -139,23 +152,25 @@ elseif strcmp(plotType,'raw')
         breathMatrix(b,:) = thisBreathComposition;
     end
 
-    % image
-    imagesc(breathMatrix)
+    colormap(customColors);
+    % uint8 is necessary because inhales are stored as 0's, unlike the 
+    % normalized function, which confuses imaging with a colormap.
+    image(uint8(breathMatrix)); 
     xlim([0.5,MATRIX_SIZE+0.5])
     ylim([0.5,nBreaths+0.5])
     TICK_STEP = .5;
     xTickLabels = 0:TICK_STEP:maxBreathSize;
     xTicks = round(linspace(1, MATRIX_SIZE, length(xTickLabels)));
     set(gca,'XTick',xTicks,'XTickLabel',xTickLabels)
-    xlabel('Time (sec)')
-    ylabel('Breath Number')
-
-    % colorbar
-    cb = colorbar('Location','NorthOutside'); 
-    caxis([0,4])
-    xTickLabels = {'Inhales'; 'Inhale Pauses'; 'Exhales'; ...
-        'Exhale Pauses'; 'Empty Space'};
-    set(cb, 'XTick', [0,1,2,3,4], 'XTickLabel', xTickLabels)
+    xlabel('Time (seconds)')
+    ylabel('Breath Number');
+    
+    % custom figure legend
+    h = zeros(4, 1);
+    for i=1:4
+        h(i) = plot(NaN,NaN,'color',customColors(i,:),'LineWidth',2);
+    end
+    legend(h,breathPhaseLabels)
 
 elseif strcmp(plotType,'line')
     % plots each breath as a function of how much time is spent in each
@@ -185,25 +200,44 @@ elseif strcmp(plotType,'line')
         if ~isnan(thisExhalePauseLength)
             plotSet(ind,:) = [4, thisExhalePauseLength];
         end
-        plot(plotSet(:,1), plotSet(:,2), 'color', MY_COLORS(b,:))
+        plot(plotSet(:,1), plotSet(:,2), 'color', MY_COLORS(b,:));
+        scatter(plotSet(:,1), plotSet(:,2), ...
+                'Marker','s','MarkerFaceColor', MY_COLORS(b,:), ...
+                'MarkerEdgeColor','none');
     end
-    inhaleSem = std(Bm.inhaleLengths)/sqrt(length(Bm.inhaleLengths));
-    inhalePauseSem = nanstd(Bm.inhaleLengths) / ...
-        sqrt(sum(~isnan(Bm.inhalePauseLengths)));
-    exhaleSem = std(Bm.exhaleLengths) / sqrt(length(Bm.exhaleLengths));
-    exhalePauseSem = nanstd(Bm.exhaleLengths) ...
-        / sqrt(sum(~isnan(Bm.exhalePauseLengths)));
+    inhaleStd = std(Bm.inhaleLengths);
+    inhalePauseStd = nanstd(Bm.inhaleLengths);
+    exhaleStd = std(Bm.exhaleLengths);
+    exhalePauseStd = nanstd(Bm.exhaleLengths);
     allMeans = [mean(Bm.inhaleLengths), ...
         nanmean(Bm.inhalePauseLengths), mean(Bm.exhaleLengths), ...
         nanmean(Bm.exhalePauseLengths)];
-    allSems = [inhaleSem, inhalePauseSem, exhaleSem, exhalePauseSem];
-    errorbar([1,2,3,4], allMeans, allSems, 'Color', 'k', ...
+    allStds = [inhaleStd, inhalePauseStd, exhaleStd, exhalePauseStd];
+    errorbar([1,2,3,4], allMeans, allStds, 'Color', 'k', ...
                                              'LineStyle', 'none', ...
-                                             'LineWidth', 3);
-    xlim([0.5,4.5]);
-    xTickLabels = {'Inhale Lengths'; 'Inhale Pause Lengths'; ...
-        'Exhale Lengths'; 'Exhale Pause Lengths'};
-    set(gca,'XTick', [1,2,3,4], 'XTickLabel', xTickLabels)
+                                             'LineWidth', 2);
+    xlim([0,5]);
+    xTickLabels = {'Inhale Durations'; 'Inhale Pause Durations'; ...
+        'Exhale Durations'; 'Exhale Pause Durations'};
+    set(gca,'XTick', [1,2,3,4], 'XTickLabel', xTickLabels);
+    ylabel('Time (seconds)');
+    allMaxes = [nanmax(Bm.inhaleLengths),nanmax(Bm.inhalePauseLengths),nanmax(Bm.exhaleLengths),nanmax(Bm.exhalePauseLengths)];
+    
+    ylim([0,max(allMaxes)+0.5]);
+    toplineBump=0.2;
+    bottomlineBump=0.1;
+    fsize=10;
+    text(1, allMaxes(1)+toplineBump, sprintf('Mean = %.3g seconds',allMeans(1)),'HorizontalAlignment','center','FontSize',fsize);
+    text(1, allMaxes(1)+bottomlineBump, sprintf('Std = %.3g seconds',allStds(1)),'HorizontalAlignment','center','FontSize',fsize);
+    
+    text(2, allMaxes(2)+toplineBump, sprintf('Mean = %.3g seconds',allMeans(2)),'HorizontalAlignment','center','FontSize',fsize);
+    text(2, allMaxes(2)+bottomlineBump, sprintf('Std = %.3g seconds',allStds(2)),'HorizontalAlignment','center','FontSize',fsize);
+    
+    text(3, allMaxes(3)+toplineBump, sprintf('Mean = %.3g seconds',allMeans(3)),'HorizontalAlignment','center','FontSize',fsize);
+    text(3, allMaxes(3)+bottomlineBump, sprintf('Std = %.3g seconds',allStds(3)),'HorizontalAlignment','center','FontSize',fsize);
+    
+    text(4, allMaxes(4)+toplineBump, sprintf('Mean = %.3g seconds',allMeans(4)),'HorizontalAlignment','center','FontSize',fsize);
+    text(4, allMaxes(4)+bottomlineBump, sprintf('Std = %.3g seconds',allStds(4)),'HorizontalAlignment','center','FontSize',fsize);
 
 elseif strcmp(plotType, 'hist')
     % plots histogram of each breath component
@@ -218,26 +252,27 @@ elseif strcmp(plotType, 'hist')
     % inhale lengths
     subplot(2,2,1)
     [inhaleCounts, inhaleBins] = hist(Bm.inhaleLengths, nBins);
-    bar(inhaleBins, inhaleCounts, 'FaceColor', MY_COLORS(1,:));
-    xlabel('Inhale Lengths (s)')
+    bar(inhaleBins, inhaleCounts, 'FaceColor', MY_COLORS(1,:),...
+        'EdgeColor','none');
+    xlabel('Inhale Durations (seconds)')
     
     % inhale pause lengths
     subplot(2,2,2)
     [inhalePauseCounts, inhalePauseBins] = hist(Bm.inhalePauseLengths,nBins);
     bar(inhalePauseBins, inhalePauseCounts, 'FaceColor', MY_COLORS(2,:));
-    xlabel('Inhale Pause Lengths (s)')
+    xlabel('Inhale Pause Durations (seconds)')
     
     % exhale lengths
     subplot(2,2,3)
     [exhaleCounts, exhaleBins] = hist(Bm.exhaleLengths,nBins);
     bar(exhaleBins, exhaleCounts, 'FaceColor', MY_COLORS(3,:));
-    xlabel('Exhale Lengths (s)')
+    xlabel('Exhale Durations (seconds)')
     
     % exhale pause lengths
     subplot(2,2,4)
     [exhalePauseCounts, exhalePauseBins] = hist(Bm.exhalePauseLengths, nBins);
     bar(exhalePauseBins, exhalePauseCounts, 'FaceColor', MY_COLORS(4,:));
-    xlabel('Exhale Pause Lengths (s)')
+    xlabel('Exhale Pause Durations (seconds)')
     
 else
     fig = nan;

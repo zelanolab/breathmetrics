@@ -124,7 +124,7 @@ if ~isempty(annotate)
     end
     % annotate information about airflow if it have been calculated
     if sum(strcmp(annotate, 'maxflow')) > 0
-        if strcmp(bm.dataType,'humanAirflow') || strcmp(bm.dataType,'rodentAirflow')
+        if strcmp(Bm.dataType,'humanAirflow') || strcmp(Bm.dataType,'rodentAirflow')
             if ~isempty(Bm.inhalePeaks) && ~isempty(Bm.exhaleTroughs)
                 for i=1:length(Bm.inhalePeaks)
                     peakAnnotations{i} = sprintf('%s%s\n', ...
