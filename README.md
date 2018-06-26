@@ -1,6 +1,6 @@
 # BreathMetrics
-### Version 1.0 
-### 5/25/2018
+### Version 1.1
+### 6/26/2018
 
 BreathMetrics is a Matlab toolbox for algorithmic extraction of the full set of features in human respiratory flow recordings as well as a subset of respiratory features in rodent thermocouple recordings.
 
@@ -18,6 +18,11 @@ BreathMetrics has functions to extract features such as times of breath onsets, 
 #### Visualizing Features Calculated Using BreathMetrics
 
 <img src="img/readme_visualization.png" width="800" />
+
+
+#### GUI for manual inspection of individual respiratory events
+
+<img src="img/readme_gui_fig.png" width="600" />
 
 
 ## Usage
@@ -41,12 +46,14 @@ fig = bm.plotCompositions('line');
 ```
 
 ## Dependencies:
-Matlab 2017b
+Core functions of this toolbox are dependent on Matlab 2017b.
 
-Extracting instantaneus phase depends on the Matlab signal processing toolbox but functionality should not be affected otherwise
+Only the instantaneus phase estimation function (which is not recommended) is dependent on the Matlab Signal Processing Toolbox.
+GUI functionality is dependant on the GUI Layout Toolbox (uix) (Sampson & Tordoff, Matlab File Exchange 2014).
+
 
 ## This toolbox is maintained by the following people:
-* Torben Noto 
+* Torben Noto
 * Guangyu Zhou
 * Christina Zelano
 
@@ -55,6 +62,7 @@ Extracting instantaneus phase depends on the Matlab signal processing toolbox bu
 * Minghong Ma (Rodent Data)
 * Andrew Moberly (Rodent Data)
 * Leslie Kay (Rodent Data)
+* Sam Cooler (GUI assistance)
 
 ### This code is hosted publicly at https://github.com/zelanolab/breathmetrics and is supported by the following National Institutes of Health (NIDCD) grants:
 * R00-DC-012803
