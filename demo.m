@@ -357,9 +357,22 @@ fig1 = bm.plotCompositions('raw');
 fig2 = bm.plotCompositions('normalized');
 fig3 = bm.plotCompositions('line');
 
+%% 4.2 manually inspect estimated respiratory events
+% with the GUI tool included in this package, users can manually inspect
+% each estimated feature to ensure its accuracy.
+
+% Notice: this is dependent on the GUI Layout Toolbox found here:
+
+% Sampson, D., & Tordoff, B. (2014). GUI Layout Toolbox 
+% (https://www.mathworks.com/ matlabcentral/fileexchange/47982-gui-layout-toolbox), 
+% MATLAB Central File Exchange. Retrieved June 10, 2018.
 
 
-%% 4.2 calculate and plot event related respiratory responses
+% The GUI can be launched with the following line code:
+bm.launchGUI();
+
+
+%% 4.3 calculate and plot event related respiratory responses
 
 % like an event related potential in neural recordings, see breathing
 % changes around a certain event type.
@@ -389,7 +402,7 @@ bm.calculateERP(myEvents, pre, post);
 bm.plotRespiratoryERP('simple');
 
 
-%% 4.3 calculate and plot resampled event related respiratory responses
+%% 4.4 calculate and plot resampled event related respiratory responses
 % because individuals breathe at different rates, it might be desirable to
 % plot respiratory event related responses as a function of point in the
 % breathing cycle, regardless of the period.
