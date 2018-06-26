@@ -8,9 +8,9 @@ Breathmetrics has been developed by a team at the Northwestern Human Neuroscienc
 
 BreathMetrics has functions to extract features such as times of breath onsets, volumes of individual breaths, and pauses in breathing, as well as summary statistics such as breathing rate, minute ventilation, and tidal volume. These features can also be visualized in several ways.
 
-### BreathMetrics accurately estimates features of complex, noisy, human respiratory signals
+### BreathMetrics Accurately Estimates Features of Complex, Noisy, Human Respiratory Signals
 
-<img src="img/readme_fig1.png" width="800" />
+<img src="img/readme_fig1.png" width="600" />
 
 
 ## Example Output
@@ -25,7 +25,7 @@ BreathMetrics has functions to extract features such as times of breath onsets, 
 <img src="img/readme_visualization.png" width="800" />
 
 
-#### GUI for manual inspection of individual respiratory events
+#### GUI for Manual Inspection of Individual Respiratory Events
 
 <img src="img/readme_gui_fig.png" width="600" />
 
@@ -35,7 +35,7 @@ First clone this repository and append it to your Matlab path.
 
 Instructions for using this toolbox (calculating specific features and accessing them) are described in demo.m
 
-To reproduce the figures above, move to the breathmetrics directory and run:
+To reproduce the figures above, navigate to the breathmetrics directory and run:
 
 ```matlab
 respiratoryData = load('sample_data.mat');
@@ -63,7 +63,7 @@ GUI functionality is dependant on the GUI Layout Toolbox (uix) (Sampson & Tordof
 
 ## Future Work
 * In addition to human airflow recordings, preliminary data shows this toolbox can be used to estimate respiratory features in human breathing belt, rodent airflow, and rodent thermocouple recordings. This is currently being validated.
-* Improve GUI to edit respiratory event estimations after manual inspection.
+* Improve GUI to allow editing of respiratory event estimations after manual inspection.
 
 ## Thanks to the following collaborators who contributed code and data:
 * Behzad Iravani & Johan Lundstrom (Code)
