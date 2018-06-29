@@ -2,11 +2,14 @@
 ### Version 1.1
 ### 6/26/2018
 
-BreathMetrics is a Matlab toolbox for algorithmic extraction of the full set of features in human respiratory flow recordings as well as a subset of respiratory features in rodent thermocouple recordings.
+BreathMetrics is a Matlab toolbox for algorithmic extraction of the full set of features in human respiratory flow recordings. 
 
 Breathmetrics has been developed by a team at the Northwestern Human Neuroscience Lab, led by Dr. Christina Zelano.
 
-BreathMetrics has functions to extract features such as times of breath onsets, volumes of individual breaths, and pauses in breathing, as well as summary statistics such as breathing rate, minute ventilation, and tidal volume. These features can also be visualized in several ways.
+BreathMetrics has functions that serve three purposes:
+1. Extracting features such as times of breath onsets, volumes of individual breaths, and pauses in breathing. 
+2. Calculating summary statistics of breathing such as breathing rate, minute ventilation, and tidal volume. 
+3. Visualizing these features in several ways including a GUI for manual inspection of individual feature estimations.
 
 ### BreathMetrics Accurately Estimates Features of Complex, Noisy, Human Respiratory Signals
 
@@ -77,7 +80,7 @@ If you would like to use this code in your project, please cite:
 
     Noto T, Zhou G, Schuele S, Templer J, & Zelano C (2018)
     Automated analysis of breathing waveforms using BreathMetrics: a
-    respiratory signal processing toolbox. Chemical Senses (in review)
+    respiratory signal processing toolbox. Chemical Senses (in press)
 
 
 ### This code is hosted publicly at https://github.com/zelanolab/breathmetrics and is supported by the following National Institutes of Health (NIDCD) grants:
