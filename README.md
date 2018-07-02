@@ -12,7 +12,10 @@ It is a matlab class with functions that serve three purposes:
 
 ### BreathMetrics Accurately Estimates Features of Complex, Noisy, Human Respiratory Signals
 
-Human breathing waveforms are surprisingly complex. Individuals regularly breathe at varying rates, with different individual breath volumes and waveforms, and may choose to pause their breathing for up to minutes at a time. These innate aspects of human respiratory signals don’t meet the assumptions made by most traditional automated digital signal processing analyses, meaning that other methods must also be used to accurately extract the many important breathing characteristics hidden in respiratory signals. By developing an algorithm that accurately parameterizes human breathing recordings, we provide a much-needed computational tool for many facets of olfactory and respiratory neuroscience. This method was rigorously validated using several methods on multiple datasets exhibiting a wide range of respiratory features. In this way, we hope this tool will allow researchers to ask new questions about how respiration relates to body, brain, and behavior.
+The ability to algorithmically obtain the parameters of breathing in a raw recording is important for many reasons. Basic metrics, such as knowing whether a person is breathing or not, have obvious importance for health but accurately quantifying features like onsets, durations, and volumes of individual breaths is critical for research investigating the biology and neuroscience of breathing and olfaction. There are a multitude of features embedded in respiratory signals that are poorly understood and investigating them may reveal new insights about their biological underpinnings and how they correlate with disease.
+
+
+Human breathing waveforms are surprisingly complex. Individuals regularly breathe at varying rates, with different individual breath volumes and waveforms, and may choose to pause their breathing for up to minutes at a time. These innate aspects of human respiratory signals make them difficult to analyze because they don’t meet the assumptions made by most traditional automated digital signal processing analyses. In this way, other methods must be used to accurately extract the many important breathing characteristics hidden in respiratory signals. By developing an algorithm that accurately parameterizes human breathing recordings, we provide a much-needed computational tool for many facets of health research as well as olfactory and respiratory neuroscience. This method was rigorously validated using several methods on multiple datasets exhibiting a wide range of respiratory features. In this way, we hope this tool will allow researchers to ask new questions about how respiration relates to brain, body, and behavior.
 
 <img src="img/readme_fig1.png" width="600" />
 
@@ -52,6 +55,7 @@ fig = bm.plotCompositions('raw');
 fig = bm.plotFeatures({'extrema','maxflow'});
 fig = bm.plotCompositions('normalized');
 fig = bm.plotCompositions('line');
+bm.launchGUI();
 ```
 
 ## Dependencies:
@@ -66,7 +70,7 @@ GUI functionality is dependant on the GUI Layout Toolbox (uix) (Sampson & Tordof
 * Christina Zelano
 
 ## Future Work
-* In addition to human airflow recordings, preliminary data shows this toolbox can be used to estimate respiratory features in human breathing belt, rodent airflow, and rodent thermocouple recordings. This is currently being validated.
+* In addition to human airflow recordings, preliminary data shows this toolbox can be used to estimate respiratory features in human breathing belt, rodent airflow, and rodent thermocouple recordings. These data are currently being validated.
 * Improve GUI to allow editing of respiratory event estimations after manual inspection.
 
 ## Thanks to the following collaborators who contributed code and data:
