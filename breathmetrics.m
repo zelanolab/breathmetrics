@@ -1,5 +1,5 @@
 classdef breathmetrics < handle 
-    % VERSION: 1.0 5/25/2018 
+    % VERSION: 1.1 6/29/2018 
     % Created by The Zelano Lab
     % This class takes in a respiratory trace and sampling rate and
     % contains methods for analysis and visualization of several features
@@ -10,9 +10,9 @@ classdef breathmetrics < handle
     % PARAMETERS
     % resp : Respiration recording in the form of a 1xn vector 
     % srate : sampling rate of recording
-    % dataType : either 'human' or 'rodent'. Human data is assumed to be
-    % airflow recordings and rodent data is assumed to be thermocouple
-    % data.
+    % dataType : Defines what kind of data the resp signal represents.
+    % Must be set to 'humanAirflow', 'rodentAirflow', 'humanBB',
+    % or 'rodentThermocouple'.
     
     properties
         rawRespiration
@@ -53,32 +53,14 @@ classdef breathmetrics < handle
     methods
         %%% constructor %%%
         function Bm = breathmetrics(resp, srate, dataType)
-            if nargin < 3
-                dataType = 'humanAirflow';
-                disp('WARNING: Data type not specified.');
-                disp(['Please specify what kind of data this is by '...
-                'inserting ''humanAirflow'', ''humanBB'','...
-                '''rodentAirflow'', or ''rodentThermocouple'' as the' ...
-                'third input arguement for BreathMetrics. Errors will'...
-                'occur if this is not done properly']);
-                disp('Proceeding assuming that this is human airflow data.')
-            end
-            
-            if srate > 5000 || srate < 20
-                disp(['Sampling rates greater than 5000 hz and less ' ...
-                    'than 20 hz are not supported at this time. ' ...
-                    'Please resample your data and try again.']);
-            end
-            
-            % flip respiratory recording vector if is incorrect orientation
-            if size(resp,1) == 1 && size(resp,2) > 1
-                resp = resp';
-            end
             
             Bm.rawRespiration=resp;
             Bm.srate = srate;
             Bm.dataType = dataType;
             Bm.featureEstimationsComplete=0;
+
+            Bm.checkClassInputs();
+            
             
             % mean smoothing window is different for rodents and humans
             if strcmp(dataType,'humanAirflow')
@@ -104,6 +86,7 @@ classdef breathmetrics < handle
                 ' for BreathMetrics. Errors will occur if this is not'...
                 ' done properly']);
                 disp('Proceeding assuming that this is human airflow data.')
+                Bm.dataType='humanAirflow';
                 smoothWinsize = 50;
             end
             
@@ -123,7 +106,62 @@ classdef breathmetrics < handle
         
         %%% Preprocessing Methods %%%
         
-        function bm = correctRespirationToBaseline(bm, method, zScore, verbose)
+        function validParams = checkClassInputs(bm)
+            % Helper function to check if class inputs are valid.
+            respErrorMessage = ['Respiratory data must be in the form '...
+                        'of a 1 x N vector. Please check that your ' ...
+                        'data is in the correct format.'];
+            if isnumeric(bm.rawRespiration)
+                if length(size(bm.rawRespiration)) == 2
+                    respCheck=1;
+                else
+                    respCheck=0;
+                    error(respErrorMessage);
+                end
+            else
+                respCheck=0;
+                error(respErrorMessage);
+            end
+            
+            srateErrorMessage = ['Sampling rates greater than 5000 hz ' ...
+                    'and less than 20 hz are not supported at this ' ...
+                    'time. Please resample your data and try again.'];
+            if isnumeric(bm.srate) && size(bm.srate) == [1,1]
+                if bm.srate > 5000 || bm.srate < 20
+                    srateCheck=0;
+                    error(srateErrorMessage);
+                else
+                    srateCheck=1;
+                end
+            else
+                srateCheck=0;
+                error(srateErrorMessage);
+            end
+            
+            supportedDataTypes = {
+                'humanAirflow';
+                'humanBB';
+                'rodentAirflow';
+                'rodentThermocouple'};
+            
+            dataTypeError = ['Data type not recognized. Please specify' ...
+                ' what kind of data this is by inserting '...
+                '''humanAirflow'', ''humanBB'', ''rodentAirflow'', or '...
+                '''rodentThermocouple'' as the third input arguement' ...
+                ' for BreathMetrics. Errors will occur if this is not'...
+                ' done properly'];
+            if ismember(bm.dataType,supportedDataTypes)
+                typeCheck=1;
+            else
+                typeCheck=0;
+                error(dataTypeError);
+            end
+            
+            validParams = sum([respCheck,srateCheck, typeCheck])==3;
+        end
+        
+        function bm = correctRespirationToBaseline(bm, method, ...
+                zScore, verbose)
             % Corrects respiratory traces to baseline by removing offsets, 
             % global linear trends and temporary drifts
             % PARAMETERS
@@ -152,7 +190,8 @@ classdef breathmetrics < handle
             if nargin < 2 || isempty(method)
                 method='simple';
                 if verbose == 1
-                    disp('No method given. Defaulting to mean baseline subtraction.')
+                    disp(['No method given. Defaulting to mean ' ...
+                        'baseline subtraction.'])
                 end
             end
             
@@ -416,10 +455,11 @@ classdef breathmetrics < handle
                 'baselineCorrectedRespiration';'inhalePeaks';
                 'exhaleTroughs';'secondaryFeatures'};
             
-            
-            if strcmp(bm.dataType,'humanAirflow') || strcmp(bm.dataType,'rodentAirflow')
+            if strcmp(bm.dataType,'humanAirflow') || ...
+                    strcmp(bm.dataType,'rodentAirflow')
                 thisFeatureSet = airflowCompleteFeatureSet;
-            elseif strcmp(bm.dataType,'humanBB') || strcmp(bm.dataType,'rodentThermocouple')
+            elseif strcmp(bm.dataType,'humanBB') || ...
+                    strcmp(bm.dataType,'rodentThermocouple')
                 thisFeatureSet = otherSignalCompleteFeatureSet;
             else
                 disp('This data type is not recognized.');
@@ -431,7 +471,8 @@ classdef breathmetrics < handle
                 thisFeature=thisFeatureSet{i};
                 if isempty(bm.(thisFeature))
                     nMissingFeatures=nMissingFeatures+1;
-                    fprintf('\n Feature: %s has not been calculated \n',thisFeature);
+                    fprintf(['\n Feature: %s has not been calculated' ...
+                        '\n'],thisFeature);
                 end
             end
             
@@ -468,7 +509,8 @@ classdef breathmetrics < handle
                 verbose = 1;
             end
             
-            if strcmp(bm.dataType,'humanAirflow') || strcmp(bm.dataType,'rodentAirflow')
+            if strcmp(bm.dataType,'humanAirflow') || ...
+                    strcmp(bm.dataType,'rodentAirflow')
                 
                 bm.correctRespirationToBaseline(baselineCorrectionMethod, ...
                     zScore, verbose);
@@ -479,11 +521,12 @@ classdef breathmetrics < handle
                 bm.findInhaleAndExhaleVolumes(verbose);
                 bm.getSecondaryFeatures(verbose);
                 
-            elseif strcmp(bm.dataType,'humanBB') || strcmp(bm.dataType,'rodentThermocouple')
+            elseif strcmp(bm.dataType,'humanBB') || ...
+                    strcmp(bm.dataType,'rodentThermocouple')
                 % only subset of features can be calculated in rodent
                 % thermocouple recordings.
-                bm.correctRespirationToBaseline(baselineCorrectionMethod, ...
-                    zScore, verbose);
+                bm.correctRespirationToBaseline(...
+                    baselineCorrectionMethod, zScore, verbose);
                 bm.findExtrema(verbose);
                 bm.getSecondaryFeatures(verbose);
             end
@@ -598,8 +641,10 @@ classdef breathmetrics < handle
             preSamples = round(pre * toRealMs);
             postSamples = round(post * toRealMs);
 
-            [thisERPMatrix,theseTrialEvents,theseRejectedEvents,theseTrialEventInds,theseRejectedEventInds] = createRespiratoryERPMatrix( thisResp, ...
-                eventArray, preSamples, postSamples, appendNaNs, verbose );
+            [thisERPMatrix,theseTrialEvents,theseRejectedEvents,...
+                theseTrialEventInds,theseRejectedEventInds] = ...
+                createRespiratoryERPMatrix( thisResp, eventArray, ...
+                preSamples, postSamples, appendNaNs, verbose );
             srateStep = 1000 / bm.srate;
             
             % if sampling rate is a float, x axis can mismatch. Following
@@ -673,15 +718,18 @@ classdef breathmetrics < handle
             
             % get respiration around events resampled to breathing rate to
             % normalize between subjects
-            avgResp = bm.secondaryFeatures('Average Inter-Breath Interval');
+            avgResp = bm.secondaryFeatures(...
+                'Average Inter-Breath Interval');
             rsPre=round(avgResp * bm.srate * prePct);
             rsPost=round(avgResp * bm.srate * postPct);
             
             thisResp = whichResp(bm);
             
             % get times a full cycle before and after each event
-            [normalizedERP,theseTrialEvents,theseRejectedEvents,theseTrialEventInds,theseRejectedEventInds] = createRespiratoryERPMatrix(thisResp, ...
-                eventArray, rsPre, rsPost, appendNaNs, verbose);
+            [normalizedERP,theseTrialEvents,theseRejectedEvents,...
+                theseTrialEventInds,theseRejectedEventInds] = ...
+                createRespiratoryERPMatrix(thisResp, eventArray, ...
+                rsPre, rsPost, appendNaNs, verbose);
             
             % resample this cycle into resampleSize points
             resampleInds=linspace(1, rsPre + rsPost + 1, resampleSize);
@@ -743,7 +791,8 @@ classdef breathmetrics < handle
             %                     value represents phase and the y-value
             %                     represents duration of phase
             
-            if strcmp(bm.dataType,'humanAirflow') || strcmp(bm.dataType,'rodentAirflow')
+            if strcmp(bm.dataType,'humanAirflow') || ...
+                    strcmp(bm.dataType,'rodentAirflow')
                 if nargin < 2
                     disp(['No plot type entered. Use ''raw'', ' ...
                         '''normalized'', or ''line'' to specify.']);
@@ -753,13 +802,20 @@ classdef breathmetrics < handle
 
                 fig = plotBreathCompositions(bm, plotType);
             else
-                disp(['This function depends on breath lengths which ' ...
-                'is not supported at this time for rodent thermocouple data.']);
+                disp(['This function depends on breath durations, ' ...
+                'which is not supported at this time for rodent ' ...
+                'thermocouple data.']);
             end
         end
         
         function fig = plotRespiratoryERP(bm,simpleOrResampled)
-            % Plot ERP (not resampled erp)
+            % Plots an erp of respiratory data that has been generated
+            % using calculateERP or calculateResampledERP. One of these
+            % functions must be run prior to calling this function.
+            
+            % simpleOrResampled : set to 'simple' to plot the precalculated 
+            % standard ERP or set to 'resampled' to plot the precalculated
+            % resampled ERP.
             
             if ischar(simpleOrResampled)
                 if strcmp(simpleOrResampled,'simple')
@@ -769,10 +825,14 @@ classdef breathmetrics < handle
                     thisERPMatrix = bm.resampledERPMatrix;
                     xAxis = bm.resampledERPxAxis;
                 else
-                    disp('method not recognized. Use simple or resampled.')
+                    disp(['Method not recognized. Please set ' ...
+                        'SimpleOrResampled to ''simple'' or ' ...
+                        '''resampled.'''])
                 end
             else
-                % just do simple erp
+                disp(['ERP method not specified. Please set ' ...
+                    'SimpleOrResampled to ''simple'' or ' ...
+                    '''resampled.'' Proceeding using a standard ERP.' ])
                 thisERPMatrix = bm.ERPMatrix;
                 xAxis = bm.ERPxAxis;
                 simpleOrResampled='simple';
@@ -783,7 +843,17 @@ classdef breathmetrics < handle
         end
         
         function launchGUI(bm)
-            BreathMetricsGUI(bm);
+            v = ver('test');
+            if isempty(v)
+                disp(['The GUI is dependant on the GUI Layout Toolbox,' ...
+                    ' which has has not been installed on your ' ...
+                    'machine. Information about installing this ' ...
+                    'package can be found here: ' ...
+                    'https://www.mathworks.com/matlabcentral/' ...
+                    'fileexchange/47982-gui-layout-toolbox'])
+            else
+                BreathMetricsGUI(bm);
+            end
         end
     end
 end
