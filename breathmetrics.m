@@ -111,6 +111,7 @@ classdef breathmetrics < handle
             respErrorMessage = ['Respiratory data must be in the form '...
                         'of a 1 x N vector. Please check that your ' ...
                         'data is in the correct format.'];
+            keyboard
             if isnumeric(bm.rawRespiration)
                 if length(size(bm.rawRespiration)) == 2
                     respCheck=1;
@@ -126,7 +127,7 @@ classdef breathmetrics < handle
             srateErrorMessage = ['Sampling rates greater than 5000 hz ' ...
                     'and less than 20 hz are not supported at this ' ...
                     'time. Please resample your data and try again.'];
-            if isnumeric(bm.srate) && size(bm.srate) == [1,1]
+            if isnumeric(bm.srate)
                 if bm.srate > 5000 || bm.srate < 20
                     srateCheck=0;
                     error(srateErrorMessage);
