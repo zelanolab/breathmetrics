@@ -1,14 +1,18 @@
 # BreathMetrics
 ### Version 1.1
-### 6/26/2018
+### 6/29/2018
 
-BreathMetrics is a Matlab toolbox for algorithmic extraction of the full set of features in human respiratory flow recordings as well as a subset of respiratory features in rodent thermocouple recordings.
+BreathMetrics is a Matlab toolbox for algorithmic extraction of the full set of features in human respiratory flow recordings. 
 
-Breathmetrics has been developed by a team at the Northwestern Human Neuroscience Lab, led by Dr. Christina Zelano.
+It is a matlab class with functions that serve three purposes:
+1. Extracting features such as times of breath onsets, volumes of individual breaths, and pauses in breathing. 
+2. Calculating summary statistics of breathing such as breathing rate, minute ventilation, and tidal volume. 
+3. Visualizing these features in several ways including a GUI for manual inspection of individual feature estimations.
 
-BreathMetrics has functions to extract features such as times of breath onsets, volumes of individual breaths, and pauses in breathing, as well as summary statistics such as breathing rate, minute ventilation, and tidal volume. These features can also be visualized in several ways.
 
 ### BreathMetrics Accurately Estimates Features of Complex, Noisy, Human Respiratory Signals
+
+Human breathing waveforms are surprisingly complex. Individuals regularly breathe at varying rates, with different individual breath volumes and waveforms, and may choose to pause their breathing for up to minutes at a time. These innate aspects of human respiratory signals don’t meet the assumptions made by most traditional automated digital signal processing analyses, meaning that other methods must also be used to accurately extract the many important breathing characteristics hidden in respiratory signals. By developing an algorithm that accurately parameterizes human breathing recordings, we provide a much-needed computational tool for many facets of olfactory and respiratory neuroscience. This method was rigorously validated using several methods on multiple datasets exhibiting a wide range of respiratory features. In this way, we hope this tool will allow researchers to ask new questions about how respiration relates to body, brain, and behavior.
 
 <img src="img/readme_fig1.png" width="600" />
 
@@ -56,7 +60,7 @@ Core functions of this toolbox are dependent on Matlab 2017b.
 Only the instantaneus phase estimation function (which is not recommended) is dependent on the Matlab Signal Processing Toolbox.
 GUI functionality is dependant on the GUI Layout Toolbox (uix) (Sampson & Tordoff, Matlab File Exchange 2014).
 
-## This toolbox is maintained by the following people:
+## This toolbox is maintained by the following people at the Human Neuroscience Lab at Northwestern University:
 * Torben Noto
 * Guangyu Zhou
 * Christina Zelano
@@ -77,7 +81,7 @@ If you would like to use this code in your project, please cite:
 
     Noto T, Zhou G, Schuele S, Templer J, & Zelano C (2018)
     Automated analysis of breathing waveforms using BreathMetrics: a
-    respiratory signal processing toolbox. Chemical Senses (in review)
+    respiratory signal processing toolbox. Chemical Senses (in press)
 
 
 ### This code is hosted publicly at https://github.com/zelanolab/breathmetrics and is supported by the following National Institutes of Health (NIDCD) grants:
