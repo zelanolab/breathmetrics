@@ -111,7 +111,7 @@ classdef breathmetrics < handle
             respErrorMessage = ['Respiratory data must be in the form '...
                         'of a 1 x N vector. Please check that your ' ...
                         'data is in the correct format.'];
-            keyboard
+                    
             if isnumeric(bm.rawRespiration)
                 if length(size(bm.rawRespiration)) == 2
                     respCheck=1;

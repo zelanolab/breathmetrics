@@ -85,7 +85,7 @@ verbose=1;
 %use a sliding window to correct respiratory data to baseline
 baselineCorrectionMethod = 'sliding'; 
 % 'simple' uses the mean. It isless accurate but faster
-%baseline_correction_method = 'simple';
+%baselineCorrectionMethod = 'simple';
 
 %zScore (1 or 0). 1 z-scores the amplitude values in the recording. Better
 %for between-subject comparisions. 0 does not z-score the data.
@@ -368,9 +368,12 @@ fig3 = bm.plotCompositions('line');
 % MATLAB Central File Exchange. Retrieved June 10, 2018.
 
 
-% The GUI can be launched with the following line code:
+% The GUI can be launched with either of the following lines code:
 bm.launchGUI();
 
+% or 
+
+% BreathMetricsGUI(bm)
 
 %% 4.3 calculate and plot event related respiratory responses
 
