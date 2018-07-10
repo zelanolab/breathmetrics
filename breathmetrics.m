@@ -114,6 +114,9 @@ classdef breathmetrics < handle
                     
             if isnumeric(bm.rawRespiration)
                 if length(size(bm.rawRespiration)) == 2
+                    if size(bm.rawRespiration,1) ~= 1
+                        bm.rawRespiration = bm.rawRespiration';
+                    end
                     respCheck=1;
                 else
                     respCheck=0;
@@ -158,7 +161,7 @@ classdef breathmetrics < handle
                 error(dataTypeError);
             end
             
-            validParams = sum([respCheck,srateCheck, typeCheck])==3;
+            validParams = sum([respCheck,srateCheck, typeCheck]) == 3;
         end
         
         function bm = correctRespirationToBaseline(bm, method, ...
@@ -213,10 +216,9 @@ classdef breathmetrics < handle
                         'window size of %i seconds \n' ],swSize);
                 end
                 
-                respSlidingMean=smooth(thisResp, srateCorrectedSW);
-                % correct tails of sliding mean
-                respSlidingMean(1:srateCorrectedSW) = mean(thisResp);
-                respSlidingMean(end-srateCorrectedSW:end) = mean(thisResp);
+                respSlidingMean=fftSmooth(thisResp, srateCorrectedSW);
+                
+                % subtract sliding mean from respiratory trace
                 bm.baselineCorrectedRespiration = ...
                     thisResp - respSlidingMean';
             
