@@ -846,7 +846,7 @@ classdef breathmetrics < handle
         end
         
         function launchGUI(bm)
-            v = ver('test');
+            v = ver('layout');
             if isempty(v)
                 disp(['The GUI is dependant on the GUI Layout Toolbox,' ...
                     ' which has has not been installed on your ' ...
