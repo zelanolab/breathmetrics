@@ -42,6 +42,8 @@
 % bmObj = breathmetrics(respiratoryRecording, srate, dataType);
 
 % automatically estimate all of the respiratory features
+%bmObj.estimateAllFeatures( zScore, baselineCorrectionMethod, verbose );
+% You can also just use:
 % bmObj.estimateAllFeatures();
 
 % all features are stored in the bm object i.e. bm.inhaleDurations
