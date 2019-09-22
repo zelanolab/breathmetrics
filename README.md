@@ -29,7 +29,7 @@ Breathmetrics is a matlab class with functions that serve 3 purposes:
 
 #### GUI for Manually Inspecting, Editing, and Annotating Respiratory Data
 
-todo
+<img src="img/readme_gui_fig.png" width="800" />
 
 ## Installation
 To use this toolbox, simply download or clone this repository and append it to your Matlab path. 
