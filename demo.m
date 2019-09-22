@@ -363,9 +363,8 @@ fig3 = bm.plotCompositions('line');
 
 % Notice: this is dependent on the GUI Layout Toolbox found here:
 
-% Sampson, D., & Tordoff, B. (2014). GUI Layout Toolbox 
-% (https://www.mathworks.com/ matlabcentral/fileexchange/47982-gui-layout-toolbox), 
-% MATLAB Central File Exchange. Retrieved June 10, 2018.
+% David Sampson (2019). GUI Layout Toolbox (https://www.mathworks.com/matlabcentral/fileexchange/47982-gui-layout-toolbox), MATLAB Central File Exchange. Retrieved June 20, 2019.
+
 
 
 % The GUI can be launched with either of the following lines code:

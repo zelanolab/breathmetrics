@@ -1,4 +1,4 @@
-classdef breathmetrics < handle 
+ classdef breathmetrics < handle 
     % VERSION: 1.1 6/29/2018 
     % Created by The Zelano Lab
     % This class takes in a respiratory trace and sampling rate and
@@ -15,39 +15,63 @@ classdef breathmetrics < handle
     % or 'rodentThermocouple'.
     
     properties
-        rawRespiration
-        smoothedRespiration
+        % signal properties
         dataType
         srate
         time
+        
+        % breathing signal
+        rawRespiration
+        smoothedRespiration
         baselineCorrectedRespiration
+        
+        % calculated features
         inhalePeaks
         exhaleTroughs
+        
         peakInspiratoryFlows
         troughExpiratoryFlows
+        
         inhaleOnsets
         exhaleOnsets
+        
         inhaleOffsets
         exhaleOffsets
+        
         inhaleVolumes
         exhaleVolumes
-        inhaleLengths
-        exhaleLengths
+        
+        inhaleDurations
+        exhaleDurations
+        
         inhalePauseOnsets
-        inhalePauseLengths
         exhalePauseOnsets
-        exhalePauseLengths
+        
+        inhalePauseDurations
+        exhalePauseDurations
+        
         secondaryFeatures
+        
         respiratoryPhase
+        
+        % erp params
         ERPMatrix
         ERPxAxis
+        
         resampledERPMatrix
         resampledERPxAxis
-        trialEvents
-        rejectedEvents
-        trialEventInds
-        rejectedEventInds
+        
+        ERPtrialEvents
+        ERPrejectedEvents
+        
+        ERPtrialEventInds
+        ERPrejectedEventInds
+        
+        statuses
+        notes
+        
         featureEstimationsComplete
+        featuresManuallyEdited
     end
    
     methods
@@ -58,6 +82,7 @@ classdef breathmetrics < handle
             Bm.srate = srate;
             Bm.dataType = dataType;
             Bm.featureEstimationsComplete=0;
+            Bm.featuresManuallyEdited=0;
 
             Bm.checkClassInputs();
             
@@ -205,6 +230,7 @@ classdef breathmetrics < handle
             %find mean resp
             respMean = thisResp - mean(thisResp);
             
+            
             if strcmp(method,'simple')
                 bm.baselineCorrectedRespiration = respMean;
                 
@@ -273,7 +299,12 @@ classdef breathmetrics < handle
             if nargin < 2
                 verbose = 0;
             end
+            
             thisResp = whichResp(bm, verbose);
+            
+            if verbose
+                disp('to find extrema');
+            end
             
             % humans and rodents breathe at different time scales so use
             % different sized extrema-finding windows
@@ -339,7 +370,13 @@ classdef breathmetrics < handle
             if nargin < 2
                 verbose = 0;
             end
+            
             thisResp = whichResp(bm, verbose);
+            
+            if verbose
+                disp('to find breath onsets and pauses');
+            end
+            
             % Identifying pauses in data with different sampling rates
             % require different binning criteria to identify pauses.
             nBINS=floor(bm.srate/100);
@@ -369,7 +406,13 @@ classdef breathmetrics < handle
             if nargin < 2
                 verbose = 0;
             end
+            
             thisResp = whichResp(bm, verbose);
+            
+            if verbose
+                disp('to find breath offsets');
+            end
+            
             [inhaleOffs,exhaleOffs]=findRespiratoryOffsets(thisResp, ...
                 bm.inhaleOnsets, bm.exhaleOnsets, ...
                 bm.inhalePauseOnsets, bm.exhalePauseOnsets);
@@ -377,15 +420,15 @@ classdef breathmetrics < handle
             bm.exhaleOffsets=exhaleOffs;
         end
         
-        function bm = findBreathAndPauseLengths(bm)
-            % calculates the length of each breath and respiratory pause.
+        function bm = findBreathAndPauseDurations(bm)
+            % calculates the duration of each breath and respiratory pause.
             % Only valid for analyzing airflow data.
-            [inhaleLens, exhaleLens, inhalePauseLens, ...
-                exhalePauseLens] = findBreathLengths(bm);
-            bm.inhaleLengths = inhaleLens;
-            bm.exhaleLengths = exhaleLens;
-            bm.inhalePauseLengths = inhalePauseLens;
-            bm.exhalePauseLengths = exhalePauseLens;
+            [inhaleDurs, exhaleDurs, inhalePauseDurs, ...
+                exhalePauseDurs] = findBreathDurations(bm);
+            bm.inhaleDurations = inhaleDurs;
+            bm.exhaleDurations = exhaleDurs;
+            bm.inhalePauseDurations = inhalePauseDurs;
+            bm.exhalePauseDurations = exhalePauseDurs;
         end
             
         function bm = findInhaleAndExhaleVolumes(bm, verbose )
@@ -399,7 +442,13 @@ classdef breathmetrics < handle
             if nargin < 2
                 verbose = 0;
             end
+            
             thisResp = whichResp(bm, verbose);
+            
+            if verbose
+                disp('to calculate breath volumes');
+            end
+            
             [inhaleVols,exhaleVols] = findRespiratoryVolumes( ...
                 thisResp, bm.srate, bm.inhaleOnsets, bm.exhaleOnsets, ...
                 bm.inhaleOffsets, bm.exhaleOffsets);
@@ -449,10 +498,10 @@ classdef breathmetrics < handle
                 'troughExpiratoryFlows';'inhaleOnsets';
                 'exhaleOnsets';'inhaleOffsets';
                 'exhaleOffsets';'inhaleVolumes';
-                'exhaleVolumes';'inhaleLengths';
-                'exhaleLengths';'inhalePauseOnsets';
-                'inhalePauseLengths';'exhalePauseOnsets';
-                'exhalePauseLengths';'secondaryFeatures'};
+                'exhaleVolumes';'inhaleDurations';
+                'exhaleDurations';'inhalePauseOnsets';
+                'inhalePauseDurations';'exhalePauseOnsets';
+                'exhalePauseDurations';'secondaryFeatures'};
             
             otherSignalCompleteFeatureSet={
                 'baselineCorrectedRespiration';'inhalePeaks';
@@ -520,7 +569,7 @@ classdef breathmetrics < handle
                 bm.findExtrema(verbose);
                 bm.findOnsetsAndPauses(verbose);
                 bm.findInhaleAndExhaleOffsets(verbose);
-                bm.findBreathAndPauseLengths();
+                bm.findBreathAndPauseDurations();
                 bm.findInhaleAndExhaleVolumes(verbose);
                 bm.getSecondaryFeatures(verbose);
                 
@@ -536,6 +585,31 @@ classdef breathmetrics < handle
             bm = bm.checkFeatureEstimations();
         end
         
+        function bm = manualAdjustPostProcess( bm ) 
+            % call this after manually changing phase onsets to recompute
+            % features
+            verbose=0;
+            
+            if strcmp(bm.dataType,'humanAirflow') || ...
+                    strcmp(bm.dataType,'rodentAirflow')
+                
+                % these must be recomputed if onsets have changed
+                bm.findInhaleAndExhaleOffsets(verbose);
+                bm.findBreathAndPauseDurations();
+                bm.findInhaleAndExhaleVolumes(verbose);
+                bm.getSecondaryFeatures(verbose);
+                
+            elseif strcmp(bm.dataType,'humanBB') || ...
+                    strcmp(bm.dataType,'rodentThermocouple')
+                % only subset of features can be calculated in rodent
+                % thermocouple recordings.
+                
+                bm.getSecondaryFeatures(verbose);
+            end
+            bm = bm.checkFeatureEstimations();
+            
+        end
+            
         function bm = calculateRespiratoryPhase(bm, myFilter, ...
                 rateEstimation, verbose)
             % Calculates real-time respiratory phase by computing a 
@@ -559,7 +633,7 @@ classdef breathmetrics < handle
             % verbose : 0 or 1 (default) : displays each step of the
             %           function
             
-            thisResp = bm.whichResp();
+            
             if nargin < 4
                 verbose=1;
             end
@@ -567,9 +641,16 @@ classdef breathmetrics < handle
                 rateEstimation = 'featureDerived';
             end
             
+            thisResp = bm.whichResp(bm, verbose);
+            
+            if verbose
+                disp('to find extrema');
+            end
+            
             if strcmp(rateEstimation,'featureDerived')
                 % breathing rate derived from inter-breath interval
                 filtCenter = bm.secondaryFeatures('Breathing Rate');
+                
             elseif strcmp(rateEstimation, 'pspec')
                 % breathing rate derived from power spectrum
                 [Pxx,pspecAxis] = pwelch(thisResp, [], [], [], ...
@@ -616,8 +697,8 @@ classdef breathmetrics < handle
             % respiratory trace 'pre' and 'post' milliseconds before and 
             % after time indices in eventArray, excluding events where a 
             % full window could not be computed.
-            % Events that were used are saved in bm.TrialEvents and events
-            % that could not be used are saved in bm.RejectedEvents.
+            % Events that were used are saved in bm.ERPtrialEvents and events
+            % that could not be used are saved in bm.ERPrejectedEvents.
             
             % PARAMETERS
             % bm : BreathMetrics class object
@@ -637,7 +718,12 @@ classdef breathmetrics < handle
                 verbose=0;
             end
             
-            thisResp = whichResp(bm);
+            thisResp = bm.whichResp(bm, verbose);
+            
+            if verbose
+                disp('to calculate ERP');
+            end
+            
             
             % convert pre and post from ms into samples
             toRealMs = bm.srate / 1000;
@@ -662,14 +748,14 @@ classdef breathmetrics < handle
             end
             
             bm.ERPMatrix = thisERPMatrix;
-            bm.trialEvents = theseTrialEvents;
-            bm.rejectedEvents=theseRejectedEvents;
-            bm.trialEventInds = theseTrialEventInds;
-            bm.rejectedEventInds=theseRejectedEventInds;
+            bm.ERPtrialEvents = theseTrialEvents;
+            bm.ERPrejectedEvents=theseRejectedEvents;
+            bm.ERPtrialEventInds = theseTrialEventInds;
+            bm.ERPrejectedEventInds=theseRejectedEventInds;
         end
         
         function bm = calculateResampledERP(bm, eventArray, prePct, ...
-                postPct, resampleSize, appendNaNs, verbose)
+                postPct, resampleSize, appendNaNs, verbose, normalizeTo)
             % Calculates an event related potential (ERP) of the 
             % respiratory trace resampled by the average breathing rate to 
             % a length of 'resampleSize' at each event in eventArray.
@@ -691,6 +777,11 @@ classdef breathmetrics < handle
             %                will be resampled (default is 2000 samples)
             % verbose : 0 or 1 (default) : displays each step of this
             %           function
+            
+            
+            if nargin < 8
+                normalizeTo='IBI';
+            end
             
             if nargin < 7
                 verbose=1;
@@ -721,12 +812,26 @@ classdef breathmetrics < handle
             
             % get respiration around events resampled to breathing rate to
             % normalize between subjects
-            avgResp = bm.secondaryFeatures(...
-                'Average Inter-Breath Interval');
+            switch normalizeTo
+                case 'IBI'
+                    avgResp = bm.secondaryFeatures(...
+                        'Average Inter-Breath Interval');
+                case 'Inhale'
+                    avgResp = bm.secondaryFeatures(...
+                        'Average Inhale Length');
+                case 'Exhale'
+                    avgResp = bm.secondaryFeatures(...
+                        'Average Exhale Length');
+            end
+            
             rsPre=round(avgResp * bm.srate * prePct);
             rsPost=round(avgResp * bm.srate * postPct);
             
-            thisResp = whichResp(bm);
+            thisResp = bm.whichResp(bm, verbose);
+            
+            if verbose
+                disp('to calculate resampled ERP');
+            end
             
             % get times a full cycle before and after each event
             [normalizedERP,theseTrialEvents,theseRejectedEvents,...
@@ -845,18 +950,8 @@ classdef breathmetrics < handle
                 xAxis, simpleOrResampled);
         end
         
-        function launchGUI(bm)
-            v = ver('layout');
-            if isempty(v)
-                disp(['The GUI is dependant on the GUI Layout Toolbox,' ...
-                    ' which has has not been installed on your ' ...
-                    'machine. Information about installing this ' ...
-                    'package can be found here: ' ...
-                    'https://www.mathworks.com/matlabcentral/' ...
-                    'fileexchange/47982-gui-layout-toolbox'])
-            else
-                BreathMetricsGUI(bm);
-            end
-        end
+        % to launch the GUI use the following code:
+        % newBM = bmGUI(bmObj)
+        
     end
 end

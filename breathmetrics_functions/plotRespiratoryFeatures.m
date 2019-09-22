@@ -87,10 +87,11 @@ if ~isempty(paramsToPlot)
         thisParam = paramsToPlot{paramInd};
         %exclude nans for points where pauses don't happen or volumes can't
         %be calculated
-        realParams = thisParam(thisParam>0);
+        realParams = thisParam(thisParam>0 & thisParam<length(xAxis)); 
         thisHandle = scatter(xAxis(realParams),respiratoryTrace(realParams),'MarkerEdgeColor',MY_COLORS(paramInd,:),'MarkerFaceColor',MY_COLORS(paramInd,:),'SizeData',sizeData);
         allHandles = [allHandles, thisHandle(1)];
         legendText{paramInd+1}=paramLabels{paramInd};
+
     end
 end
 
