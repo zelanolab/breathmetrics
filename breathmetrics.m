@@ -718,7 +718,7 @@
                 verbose=0;
             end
             
-            thisResp = bm.whichResp(bm, verbose);
+            thisResp = bm.whichResp( verbose);
             
             if verbose
                 disp('to calculate ERP');
@@ -818,10 +818,10 @@
                         'Average Inter-Breath Interval');
                 case 'Inhale'
                     avgResp = bm.secondaryFeatures(...
-                        'Average Inhale Length');
+                        'Average Inhale Duration');
                 case 'Exhale'
                     avgResp = bm.secondaryFeatures(...
-                        'Average Exhale Length');
+                        'Average Exhale Duration');
             end
             
             rsPre=round(avgResp * bm.srate * prePct);
