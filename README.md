@@ -4,24 +4,15 @@
 
 BreathMetrics is a Matlab toolbox for analyzing respiratory recordings.
 
-Respiratory signals contain a wealth of information but they can be quite challenging to analyze because breathing is inhearently complex and respiratory recordings tend to be prone to noise. Breathmetrics was designed to make analyzing respiratory recordings easier.
-
-
-Breathmetrics is a matlab class with functions that serve four purposes:
-1. Extracting features such as times of breath onsets, volumes of individual breaths, and pauses in breathing. 
-2. Calculating summary statistics of breathing such as breathing rate, minute ventilation, and tidal volume. 
-3. Visualizing, editing, and annotating these features using several methods including a GUI.
+Respiratory signals contain a wealth of information but they can be quite challenging to analyze because breathing is inhearently complex and respiratory recordings tend to be prone to noise. Breathmetrics was designed to make analyzing respiratory recordings easier by automatically de-noising the data and extracting the many features embedded within respiratory recordings. 
+The methods used for automatically extracting features of respiratory recordings have been validated, peer-reviewed, and published in Chemical Senses, a scientific journal.
 
 <img src="img/readme_fig1.png" width="600" />
 
-### BreathMetrics Accurately Estimates Features of Complex, Noisy, Human Respiratory Signals
-
-The ability to algorithmically obtain the parameters of breathing in a raw recording is important for many reasons. Basic metrics, such as knowing whether a person is breathing or not, have obvious importance for health but accurately quantifying features like onsets, durations, and volumes of individual breaths is critical for research investigating the biology and neuroscience of breathing and olfaction. There are a multitude of features embedded in respiratory signals that are poorly understood and investigating them may reveal new insights about their biological underpinnings and how they correlate with disease.
-
-
-Human breathing waveforms are surprisingly complex. Individuals regularly breathe at varying rates, with different individual breath volumes and waveforms, and may choose to pause their breathing for up to minutes at a time. These innate aspects of human respiratory signals make them difficult to analyze because they don’t meet the assumptions made by most traditional automated digital signal processing analyses. In this way, other methods must be used to accurately extract the many important breathing characteristics hidden in respiratory signals. By developing an algorithm that accurately parameterizes human breathing recordings, we provide a much-needed computational tool for many facets of health research as well as olfactory and respiratory neuroscience. This method was rigorously validated using several methods on multiple datasets exhibiting a wide range of respiratory features. In this way, we hope this tool will allow researchers to ask new questions about how respiration relates to brain, body, and behavior.
-
-
+Breathmetrics is a matlab class with functions that serve 3 purposes:
+1. Extracting features such as times of breath onsets, volumes of individual breaths, and pauses in breathing. 
+2. Calculating summary statistics of breathing such as breathing rate, minute ventilation, and tidal volume. 
+3. Visualizing, editing, and annotating these features using several methods including a Graphical User Interface.
 
 
 ## Example Output
@@ -36,17 +27,26 @@ Human breathing waveforms are surprisingly complex. Individuals regularly breath
 <img src="img/readme_visualization.png" width="800" />
 
 
-#### GUI for Manual Inspection of Individual Respiratory Events
+#### GUI for Manually Inspecting, Editing, and Annotating Respiratory Data
 
 todo
 
+## Installation
+To use this toolbox, simply download or clone this repository and append it to your Matlab path. 
+(see Matlab's pathtool function for help)
 
-## Usage
-First clone this repository and append it to your Matlab path.
+## Usage and Demo
 
-Instructions for using this toolbox (calculating specific features and accessing them) are described in demo.m
+Instructions for using this toolbox are described in demo.m
+This file has examples showing how to:
+* automatically calculate all respiratory features
+* access them in the data structure
+* visualize them using several methods
 
-To reproduce the figures above, navigate to the breathmetrics directory and run:
+GUI_demo.m contains instructions for using the GUI to manually inspect, edit, and annotate features in the recording.
+
+
+To reproduce the figures above, navigate to the breathmetrics directory and run the following:
 
 ```matlab
 respiratoryData = load('sample_data.mat');
@@ -67,6 +67,7 @@ Breathmetrics is designed to be used with Matlab2019A. It has been tested and wo
 
 Only the instantaneus phase estimation function (which is not recommended) is dependent on the Matlab Signal Processing Toolbox.
 
+
 ## This toolbox is maintained by the following people at the Human Neuroscience Lab at Northwestern University:
 * Torben Noto
 * Guangyu Zhou
@@ -82,7 +83,7 @@ Only the instantaneus phase estimation function (which is not recommended) is de
 * Sam Cooler (GUI assistance)
 
 ## Reference
-A PDF of the peer-reviewed paper validating the methods we use here can be found in this directory.
+A PDF of the peer-reviewed paper validating the methods we use here can be found in this directory (NotoBreathmetricsChemicalSenses2018.pdf).
 
 If you would like to use this code in your project, please cite:
 
