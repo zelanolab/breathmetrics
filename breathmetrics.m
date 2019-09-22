@@ -409,7 +409,7 @@
             
             thisResp = whichResp(bm, verbose);
             
-            if verbose
+            if verbose==1
                 disp('to find breath offsets');
             end
             
