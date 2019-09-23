@@ -358,7 +358,10 @@ S.ax = axes(...
     'units','pixels',...
     'position',axisWindowInds,...
     'Xlim',S.yLims,...
-    'YLim',S.xLims);
+    'YLim',S.xLims,...
+    'XGrid','on',...
+    'YGrid','on');
+grid(S.ax,'on')
 
 % for zooming
 set(S.ax.Toolbar,'Visible','on');
@@ -550,6 +553,60 @@ plotMeCallback({},{},S,0);
 
 end
 
+
+% add note to selected breath
+function [] = noteCallback(varargin)
+% Callback for pushbutton
+S = varargin{3};  % Get the structure.
+
+UserData=S.fh.UserData;
+
+% prompt user for note
+noteToAdd = inputdlg('Add a Note');
+if ~isempty(noteToAdd)
+    % add note
+    UserData.breathSelectMat{UserData.thisBreath,5}=noteToAdd{1};
+    set( S.fh, 'UserData', UserData);
+    set( S.uit,'Data',S.fh.UserData.breathSelectMat);
+end
+
+end
+
+
+% revert all changes made to this breath back to original
+function undoChangesCallback(varargin)
+
+S=varargin{3};
+
+UserData=S.fh.UserData;
+
+
+originalVals=UserData.initialBreathEditMat(UserData.thisBreath,:);
+
+UserData.tempPhaseOnsetChanges=originalVals;
+UserData.breathSelectMat{UserData.thisBreath,4}='valid';
+
+set( S.fh, 'UserData', UserData);
+set( S.uit,'Data',S.fh.UserData.breathSelectMat);
+plotMeCallback({},{},S,1);
+end
+
+% reject selected breath
+function [] = rejectBreathCallback(varargin)
+% Callback for pushbutton
+S = varargin{3};  % Get the structure.
+
+UserData=S.fh.UserData;
+
+% set status of this breath to rejected
+UserData.breathSelectMat{UserData.thisBreath,4}='rejected';
+set( S.fh, 'UserData', UserData);
+set( S.uit,'Data',S.fh.UserData.breathSelectMat);
+
+end
+
+
+
 % function to plot selected breath
 function [] = plotMeCallback(varargin)
 
@@ -644,6 +701,9 @@ if ~isnan(thisMidpoint)
     % update xlims
     set(S.ax,'XLim',newXLims);
     
+    % draw helpful grid
+    grid(S.ax,'on');
+    
     
     % plot last exhale
     if UserData.thisBreath>1
@@ -716,56 +776,6 @@ end
 
 end
 
-% add note to selected breath
-function [] = noteCallback(varargin)
-% Callback for pushbutton
-S = varargin{3};  % Get the structure.
-
-UserData=S.fh.UserData;
-
-% prompt user for note
-noteToAdd = inputdlg('Add a Note');
-if ~isempty(noteToAdd)
-    % add note
-    UserData.breathSelectMat{UserData.thisBreath,5}=noteToAdd{1};
-    set( S.fh, 'UserData', UserData);
-    set( S.uit,'Data',S.fh.UserData.breathSelectMat);
-end
-
-end
-
-
-% revert all changes made to this breath back to original
-function undoChangesCallback(varargin)
-
-S=varargin{3};
-
-UserData=S.fh.UserData;
-
-
-originalVals=UserData.initialBreathEditMat(UserData.thisBreath,:);
-
-UserData.tempPhaseOnsetChanges=originalVals;
-UserData.breathSelectMat{UserData.thisBreath,4}='valid';
-
-set( S.fh, 'UserData', UserData);
-set( S.uit,'Data',S.fh.UserData.breathSelectMat);
-plotMeCallback({},{},S,1);
-end
-
-% reject selected breath
-function [] = rejectBreathCallback(varargin)
-% Callback for pushbutton
-S = varargin{3};  % Get the structure.
-
-UserData=S.fh.UserData;
-
-% set status of this breath to rejected
-UserData.breathSelectMat{UserData.thisBreath,4}='rejected';
-set( S.fh, 'UserData', UserData);
-set( S.uit,'Data',S.fh.UserData.breathSelectMat);
-
-end
 
 %%% right side %%%
 
