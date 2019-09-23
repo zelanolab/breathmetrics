@@ -1,7 +1,18 @@
 function newBM = bmGui(bmObj)
 
-% initialize static parameters
-S.myColors=parula(4);
+% This is the GUI for breathmetrics that allows users to edit respiratory
+% features, annotate breaths, and reject breaths from analysis.
+
+% input: bmObj is a breathmetrics class object that has feature
+% estimations complete
+% output: newBM is the modified breathmetrics object. If the figure window
+% is closed without saving, the original bmObject will be returned.
+
+
+
+%%% initialize static parameters %%%
+
+S.myColors=parula(5);
 S.breathSelectMenuColNames={'Breath No.';'Onset';'Offset';'Status';'Note'};
 S.breathEditMenuColNames={'Inhale';'Inhale Pause';'Exhale';'Exhale Pause'};
 
@@ -9,16 +20,17 @@ S.breathEditMenuColNames={'Inhale';'Inhale Pause';'Exhale';'Exhale Pause'};
 myPadding=10;
 
 figureWindowWidth=1250;
-figureWindowHeight=600;
+figureWindowHeight=560;
 
 figureXInit=0;
-figureYInit=figureWindowHeight+100;
+figureYInit=figureWindowHeight;
 
 figureWindowInds=[figureXInit,figureYInit,figureWindowWidth,figureWindowHeight];
 
 buttonSize=[125,25];
 biggerButtonSize=[180,40];
-smallerButtonSize=[100,25];
+smallerButtonSize=[100,50];
+
 
 %%% INITIALIZE LOCATIONS OF FIGURE ELEMENTS %%%
 
@@ -55,7 +67,7 @@ breathSelectMenuInds = [...
 % previous breath and next breath buttons
 
 prevBreathButtonX=breathSelectMenuRight+myPadding;
-nextBreathButtonX=prevBreathButtonX+smallerButtonSize(1)+myPadding;
+nextBreathButtonX=prevBreathButtonX+smallerButtonSize(1);
 breathNavButtonBottom=breathSelectMenuTitleTextBottom-smallerButtonSize(2)-myPadding;
 
 prevBreathButtonInds=[...
@@ -71,10 +83,11 @@ nextBreathButtonInds=[...
     smallerButtonSize(2)]; 
 
 leftSideButtonSpacing=-myPadding-biggerButtonSize(2);
+leftSideButtonPadding=myPadding*4;
 
 % button to add note to selected breath
 noteButtonX=breathSelectMenuRight+myPadding;
-noteButtonBottom=breathNavButtonBottom+leftSideButtonSpacing;
+noteButtonBottom=breathNavButtonBottom+leftSideButtonSpacing-leftSideButtonPadding;
 
 noteButtonInds=[...
     noteButtonX,...
@@ -92,12 +105,13 @@ rejectButtonInds=[...
     biggerButtonSize(1),...
     biggerButtonSize(2)];
 
-% button to revert breath to orignal
-revertBreathButtonBottom=rejectButtonBottom+leftSideButtonSpacing;
 
-revertBreathButtonInds=[...
+% button to undo changes to this breath
+undoBreathButtonY=rejectButtonBottom+leftSideButtonSpacing-leftSideButtonPadding;
+
+undoBreathButtonInds=[...
     noteButtonX,...
-    revertBreathButtonBottom,...
+    undoBreathButtonY,...
     biggerButtonSize(1),...
     biggerButtonSize(2)];
 
@@ -109,6 +123,8 @@ saveAllChangesButtonInds=[...
     saveAllChangesButtonBottom,...
     biggerButtonSize(1),...
     biggerButtonSize(2)];
+
+
 
 %%% RIGHT SIDE %%%
 
@@ -191,32 +207,6 @@ for i=1:4
 end
 
 
-% button to update changes from text
-updateTextButtonXInd=plottingAxisX;
-updateTextButtonYInd=pauseRemoveButtonBottom-myPadding/2-biggerButtonSize(2);
-
-updateTextButtonInds=[updateTextButtonXInd,...
-        updateTextButtonYInd,...
-        biggerButtonSize(1),...
-        biggerButtonSize(2)];
-    
-    
-% button to update changes from draggable points
-updateDPButtonXInd=updateTextButtonXInd+biggerButtonSize(1)+myPadding;
-
-updateDPButtonInds=[updateDPButtonXInd,...
-        updateTextButtonYInd,...
-        biggerButtonSize(1),...
-        biggerButtonSize(2)];
-    
-% button to save changes
-saveThisChangeButtonXInd=updateDPButtonXInd+biggerButtonSize(1)+myPadding;
-saveThisChangeButtonWidth=230;
-saveThisChangeButtonInds=[saveThisChangeButtonXInd,...
-        updateTextButtonYInd,...
-        saveThisChangeButtonWidth,...
-        biggerButtonSize(2)];
-
 S.xLims=[-3,3];
 S.yLims=[-1,1];
 
@@ -229,7 +219,6 @@ S.fh = figure(...
     'name','BreathMetrics GUI',...
     'numbertitle','off',...
     'resize','off');
-setappdata(S.fh, 'Tag', 'running');
 
 % most data is stored in S.fh.UserData
 % initialize it here
@@ -294,7 +283,6 @@ set(S.fh, 'UserData', UserData);
 
 %%% left side %%%
 
-
 % title above breath select menu
 S.breathSelectTitleText = uicontrol(...
     'style','text',...
@@ -313,14 +301,14 @@ S.prevBreathButton = uicontrol(...
     'style','push',...
     'units','pixels',...
     'position',prevBreathButtonInds,...
-    'fontsize',10,...
+    'fontsize',12,...
     'string','Previous Breath');
 
 S.nextBreathButton = uicontrol(...
     'style','push',...
     'units','pixels',...
     'position',nextBreathButtonInds,...
-    'fontsize',10,...
+    'fontsize',12,...
     'string','Next Breath');
 
 S.noteButton = uicontrol(...
@@ -339,12 +327,12 @@ S.rejectButton = uicontrol(...
     'string','Reject This Breath');
 
 % button to reject selected breath from analysis
-S.revertChangesButton = uicontrol(...
+S.undoChangesButton = uicontrol(...
     'style','push',...
     'units','pixels',...
-    'position',revertBreathButtonInds,...
+    'position',undoBreathButtonInds,...
     'fontsize',12,...
-    'string','Revert Changes To This Breath');
+    'string','Undo Changes To This Breath');
 
 % button to reject selected breath from analysis
 S.saveChangesButton = uicontrol(...
@@ -384,7 +372,7 @@ for i=1:4
         'unit','pix',...
         'position',onsetEditTextBoxTitleInds(i,:),...
         'string',S.breathEditMenuColNames{i},...
-        'backgroundcolor',S.myColors(i,:),...
+        'backgroundcolor',S.myColors(i+1,:),...
         'fontsize',12);
     
     % editable box field
@@ -419,31 +407,6 @@ for i=1:4
 end
 
 
-% button to update plot from text
-S.updatePlotFromTextButton = uicontrol(...
-    'style','push',...
-    'units','pixels',...
-    'position',updateTextButtonInds,...
-    'fontsize',14,...
-    'string','Update Changes to Text');
-  
-% button to update plot from draggable points
-S.updatePlotFromPointButton = uicontrol(...
-    'style','push',...
-    'units','pixels',...
-    'position',updateDPButtonInds,...
-    'fontsize',14,...
-    'string','Update Changes to Plot');
-
-% button to save changes made by text or point
-S.saveThisChangeButton = uicontrol(...
-    'style','push',...
-    'units','pixels',...
-    'position',saveThisChangeButtonInds,...
-    'fontsize',14,...
-    'string','Save All Changes To This Breath');
-
-
 % set call functions to include structure with all elements
 
 %%% left side %%%
@@ -454,16 +417,19 @@ set(S.nextBreathButton,'call',{@nextBreathCallback,S});
 
 set(S.noteButton,'call',{@noteCallback,S});
 set(S.rejectButton,'call',{@rejectBreathCallback,S});
-set(S.revertChangesButton,'call',{@revertChangesCallback,S});
 
 set(S.saveChangesButton,'call',{@saveAllChangesCallback,S});
 
 %%% right side %%%
-set(S.updatePlotFromTextButton,'call',{@updatePlotFromTextCallback,S});
-set(S.updatePlotFromPointButton,'call',{@updatePlotFromPointCallback,S});
-set(S.saveThisChangeButton,'call',{@saveTempChangesCallback,S});
+
+% change plot when phase text is edited
+set(S.phaseEditors(:),'call',{...
+    @editPlotFromTextCallback,...
+    S});
 
 for i=1:4
+    
+    % create and remove pauses
     if ismember(i,[2,4])
         
         set(S.pauseInits(i),'call',{...
@@ -477,22 +443,39 @@ for i=1:4
     end
 end
 
+set(S.undoChangesButton,'call',{@undoChangesCallback,S});
+
+
+
 % plot first breath when this initializes
 plotMeCallback({},{},S,0);
+newBM=S.fh.UserData.bmObj;
+
+
+%%% Run until user clicks save all changes %%%
+
 
 % save function changes tag of button to 'done'
 waitfor(S.saveChangesButton,'Tag');
 
-newBM=S.fh.UserData.newBM;
+try 
+    % get new bmObj from userdata
+    newBM=S.fh.UserData.newBM;
+    
+    % recompute breath durations, volumes, etc.
+    newBM.manualAdjustPostProcess();
+    close(S.fh);
 
-newBM.manualAdjustPostProcess();
-
-close(S.fh);
+catch
+    % if figure is closed without saving.
+    disp('No changes saved.');
+end
 
 end % main function
 
 %%
 %%% CALLBACK FUNCTIONS %%%
+
 
 %%% left side %%%
 
@@ -503,7 +486,7 @@ function uitable_CellSelectionCallback(varargin)
 eventdata=varargin{2};
 S=varargin{3};
 
-% sometimes this is called and event data is empty
+% sometimes this is called and eventdata is empty
 if size(eventdata.Indices,1)>0
     
     selectedRow = eventdata.Indices(1);
@@ -535,6 +518,10 @@ else
 end
 
 UserData.thisBreath=goToBreath;
+% overwrite changes to last breath with this breath's params
+UserData.tempPhaseOnsetChanges=UserData.breathEditMat(UserData.thisBreath,:);
+
+    
 set( S.fh, 'UserData', UserData);
 plotMeCallback({},{},S,0);
 
@@ -555,6 +542,9 @@ else
 end
 
 UserData.thisBreath=goToBreath;
+% overwrite changes to last breath with this breath's params
+UserData.tempPhaseOnsetChanges=UserData.breathEditMat(UserData.thisBreath,:);
+
 set( S.fh, 'UserData', UserData);
 plotMeCallback({},{},S,0);
 
@@ -562,9 +552,12 @@ end
 
 % function to plot selected breath
 function [] = plotMeCallback(varargin)
-% Callback for pushbutton
+
+% Callback function that plots data saved in temporary storage
 S = varargin{3};  % Get the structure.
 bmObj = S.fh.UserData.bmObj; % get bm
+
+UserData=S.fh.UserData;
 
 if nargin<4
     isUpdatePlot=0;
@@ -581,9 +574,9 @@ if nargin>3
 end
 
 % get range of onset and offset of this breath
-io=S.fh.UserData.breathSelectMat{S.fh.UserData.thisBreath,2};
-eo=S.fh.UserData.breathSelectMat{S.fh.UserData.thisBreath,3};
-breathStatus=S.fh.UserData.breathSelectMat{S.fh.UserData.thisBreath,4};
+io=UserData.breathSelectMat{UserData.thisBreath,2};
+eo=UserData.breathSelectMat{UserData.thisBreath,3};
+breathStatus=UserData.breathSelectMat{UserData.thisBreath,4};
 
 lineType='k-';
 breathInfo='';
@@ -593,7 +586,7 @@ switch breathStatus
         lineType='k-';
         breathInfo=breathStatus;
     case 'edited'
-        lineType='g-';
+        lineType='b-';
         breathInfo=breathStatus;
     case 'rejected'
         lineType='r-';
@@ -632,7 +625,7 @@ if ~isnan(thisMidpoint)
     
     hold(S.ax,'off');
     
-    r=plot(S.ax,...
+    plot(S.ax,...
         timeThisWindow,...
         respThisWindow,...
         lineType,...
@@ -642,15 +635,56 @@ if ~isnan(thisMidpoint)
     
     
     % update labels and title
-    titleText=sprintf('Breath %i (%s)', S.fh.UserData.thisBreath,breathInfo);
+    titleText=sprintf('Breath %i (%s)', UserData.thisBreath,breathInfo);
     set(get(S.ax,'XLabel'),'String','Time (S)');
     set(get(S.ax,'YLabel'),'String','Amplitude');
     set(get(S.ax,'title'),'String',titleText);
+    
     
     % update xlims
     set(S.ax,'XLim',newXLims);
     
     
+    % plot last exhale
+    if UserData.thisBreath>1
+        
+        lastBreath=UserData.thisBreath-1;
+        
+        % if exhale pause, plot exhale pause, if not just plot last exhale
+        lastExhalePause=S.fh.UserData.breathEditMat(lastBreath,4);
+        if ~isnan(lastExhalePause)
+            thisXInd=lastExhalePause;
+            thisYInd=bmObj.baselineCorrectedRespiration(1,round(lastExhalePause*bmObj.srate));
+            thisLabel='Last Exhale Pause';
+        else
+            lastExhale=UserData.breathEditMat(lastBreath,3);
+            thisXInd=lastExhale;
+            thisYInd=bmObj.baselineCorrectedRespiration(1,round(lastExhale*bmObj.srate));
+            thisLabel='Last Exhale';
+        end
+        
+        scatter(thisXInd,thisYInd,'ko','filled','SizeData',80);
+        text(thisXInd,thisYInd,thisLabel,...
+            'VerticalAlignment','top',...
+            'HorizontalAlignment','left');
+    end
+    
+    % plot next inhale
+    if UserData.thisBreath<UserData.nBreaths
+        
+        nextBreath=UserData.thisBreath+1;
+        nextInhale=UserData.breathEditMat(nextBreath,1);
+        
+        thisYInd=bmObj.baselineCorrectedRespiration(1,round(nextInhale*bmObj.srate));
+        
+        scatter(nextInhale,thisYInd,'ko','filled','SizeData',80);
+        text(nextInhale,thisYInd,'Next Inhale',...
+            'VerticalAlignment','top',...
+            'HorizontalAlignment','left');
+        
+    end
+    
+    % create phase points for this breath
     phasePoints=[];
     
     for ph=1:4
@@ -667,10 +701,13 @@ if ~isnan(thisMidpoint)
             
             thisPhaseYInd=bmObj.baselineCorrectedRespiration(1,round(thisPhaseOnset*bmObj.srate));
             
-            phasePoints(end+1)=drawpoint(S.ax,...
+            % make draggable points for this breath
+            dp=drawpoint(S.ax,...
                 'Position',[thisPhaseOnset,thisPhaseYInd],...
-                'Label',S.breathEditMenuColNames{ph},...
-                'Color',S.myColors(ph,:));
+                'Tag',S.breathEditMenuColNames{ph},...
+                'Color',S.myColors(ph+1,:));
+            
+            addlistener(dp,'ROIMoved',@(src,evnt)pointMoveCallback(src,evnt,S));
             
         end
     end
@@ -699,7 +736,7 @@ end
 
 
 % revert all changes made to this breath back to original
-function revertChangesCallback(varargin)
+function undoChangesCallback(varargin)
 
 S=varargin{3};
 
@@ -732,21 +769,32 @@ end
 
 %%% right side %%%
 
-% initialize new pause onset
+% create new pause onset
 function createNewPauseFromButtonCallback(varargin)
 
 S=varargin{3};
 pauseType=varargin{4};
-
-thisMidpoint=mean(S.ax.XLim);
 
 % get numbers in each phase edit field
 UserData=S.fh.UserData;
 
 if strcmp(pauseType,'Inhale Pause')
     pauseInd=2;
+    thisMidpoint=mean(UserData.breathEditMat(UserData.thisBreath,[1,3]));
 else
     pauseInd=4;
+    
+    thisExhale=UserData.breathEditMat(UserData.thisBreath,3);
+    
+    if UserData.thisBreath<UserData.nBreaths
+        
+        nextInhale=UserData.breathEditMat(UserData.thisBreath+1,1);
+        thisMidpoint=mean([thisExhale,nextInhale]);
+    else
+        theseLims=get(S.ax,'XLim');
+        thisMidpoint=mean([thisExhale,theseLims(2)]);
+        
+    end
 end
 
 tempPhaseOnsetChanges=nan(1,4);
@@ -769,6 +817,7 @@ tempPhaseOnsetChanges(1,pauseInd)=thisMidpoint;
 UserData.tempPhaseOnsetChanges=tempPhaseOnsetChanges;
 set( S.fh, 'UserData', UserData);
 
+saveTempChangesCallback({},{},S);
 plotMeCallback({},{},S,1);
 end
 
@@ -805,20 +854,21 @@ end
 UserData.tempPhaseOnsetChanges=tempPhaseOnsetChanges;
 set( S.fh, 'UserData', UserData);
 
+saveTempChangesCallback({},{},S);
 plotMeCallback({},{},S,1);
 
 end
 
-
-% updates the plot from text input, saves new timepoints into temporary storage
-function updatePlotFromTextCallback(varargin)
+% when you edit the text in the phase textbox it automatically moves the
+% point
+function editPlotFromTextCallback(varargin)
 S=varargin{3};
-
 % get numbers in each phase edit field
 UserData=S.fh.UserData;
 
 tempPhaseOnsetChanges=nan(1,4);
 for ph=1:4
+        
     newInd=get(S.phaseEditors(ph),'String');
     if isnumeric(str2double(newInd))
         tempPhaseOnsetChanges(1,ph)=str2double(newInd);
@@ -827,46 +877,49 @@ for ph=1:4
     end
 end
 
-% save in temporary storage
+% save it
 UserData.tempPhaseOnsetChanges=tempPhaseOnsetChanges;
-
 set( S.fh, 'UserData', UserData);
 
+
+saveTempChangesCallback({},{},S);
 plotMeCallback({},{},S,1);
 end
 
-% updates the plot from drawpoint location
-% saves new timepoints into temporary storage
+% This is called when you move a point
+function pointMoveCallback(varargin)
 
-function updatePlotFromPointCallback(varargin)
+% which point was moved
+src=varargin{1};
+
+thisTag=src.Tag;
+thisXPos=src.Position(1);
 
 S=varargin{3};
 UserData=S.fh.UserData;
 
-% indices of new points will be put in here
-tempPhaseOnsetChanges=nan(1,4);
-
-% get positions of points
-nChildren=length(S.ax.Children);
-for el=1:nChildren
-    thisPlotEl=S.ax.Children(el);
-    if isa(thisPlotEl,'images.roi.Point')
-        thisAdjustedOnset=thisPlotEl.Position(1);
-        thisLabel=thisPlotEl.Label;
-        IndexC = find(strcmp(S.breathEditMenuColNames,thisLabel));
-        tempPhaseOnsetChanges(1,IndexC)=thisAdjustedOnset;
+if ~isempty(thisTag)
+    switch thisTag
+        case 'Inhale'
+            tagInd=1;
+        case 'Inhale Pause'
+            tagInd=2;
+        case 'Exhale'
+            tagInd=3;
+        case 'Exhale Pause'
+            tagInd=4;
     end
+
+    UserData.tempPhaseOnsetChanges(1,tagInd)=thisXPos;
+    set( S.fh, 'UserData', UserData);
+
+    saveTempChangesCallback({},{},S);
+    plotMeCallback({},{},S,1);
 end
 
-% save it
-
-UserData.tempPhaseOnsetChanges=tempPhaseOnsetChanges;
-
-% save in temporary storage
-set( S.fh, 'UserData', UserData);
-
-plotMeCallback({},{},S,1);
 end
+
+
 
 % saves temporary changes into storage
 % calls validityDecision to check that points make sense
@@ -1066,4 +1119,3 @@ if strcmp(answer,'Yes')
     set( src, 'Tag', 'done');
 end
 end
-
