@@ -2,11 +2,13 @@ function newBM = bmGui(bmObj)
 
 % This is the GUI for breathmetrics that allows users to edit respiratory
 % features, annotate breaths, and reject breaths from analysis.
-
+% 
 % input: bmObj is a breathmetrics class object that has feature
 % estimations complete
+% 
 % output: newBM is the modified breathmetrics object. If the figure window
-% is closed without saving, the original bmObject will be returned.
+% is closed without saving, the original breathmetrics object will be 
+% returned.
 
 
 
@@ -15,7 +17,7 @@ function newBM = bmGui(bmObj)
 S.myColors=parula(5);
 S.breathSelectMenuColNames={'Breath No.';'Onset';'Offset';'Status';'Note'};
 S.breathEditMenuColNames={'Inhale';'Inhale Pause';'Exhale';'Exhale Pause'};
-
+S.bmObjInit=bmObj;
 % figure params
 myPadding=10;
 
@@ -452,7 +454,6 @@ set(S.undoChangesButton,'call',{@undoChangesCallback,S});
 
 % plot first breath when this initializes
 plotMeCallback({},{},S,0);
-newBM=S.fh.UserData.bmObj;
 
 
 %%% Run until user clicks save all changes %%%
@@ -470,6 +471,7 @@ try
     close(S.fh);
 
 catch
+    newBM=S.bmObjInit;
     % if figure is closed without saving.
     disp('No changes saved.');
 end
@@ -745,7 +747,6 @@ if ~isnan(thisMidpoint)
     end
     
     % create phase points for this breath
-    phasePoints=[];
     
     for ph=1:4
         if ~isUpdatePlot
@@ -1109,22 +1110,24 @@ exhalePauseOnsets=round(UserData.breathEditMat(:,4)' * UserData.bmObj.srate);
 statuses=UserData.breathSelectMat(:,4)';
 notes=UserData.breathSelectMat(:,5)';
 
-newBM=UserData.bmObj;
-newBM.inhaleOnsets=inhaleOnsets;
-newBM.inhalePauseOnsets=inhalePauseOnsets;
-newBM.exhaleOnsets=exhaleOnsets;
-newBM.exhalePauseOnsets=exhalePauseOnsets;
-
-newBM.notes=notes;
-newBM.statuses=statuses;
-newBM.featuresManuallyEdited=1;
 
 answer = questdlg('Are you sure that you want to save all changes? This window will be closed and your edits will be saved into the output variable.', ...
 	'Yes', ...
 	'No');
 
 if strcmp(answer,'Yes')
+    
+    newBM=UserData.bmObj;
+    newBM.inhaleOnsets=inhaleOnsets;
+    newBM.inhalePauseOnsets=inhalePauseOnsets;
+    newBM.exhaleOnsets=exhaleOnsets;
+    newBM.exhalePauseOnsets=exhalePauseOnsets;
+
+    newBM.notes=notes;
+    newBM.statuses=statuses;
+    newBM.featuresManuallyEdited=1;
     UserData.newBM=newBM;
+    
     set( S.fh, 'UserData', UserData);
     set( src, 'Tag', 'done');
 end

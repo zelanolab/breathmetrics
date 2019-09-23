@@ -6,6 +6,16 @@
 % extract respiratory features, access the features of interest, calculate
 % summaries of these features, and visualize them.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% PLEASE READ THROUGH THIS BEFORE USING THIS CODE FOR ANY ACADEMIC PROJECT
+%
+% If you encounter a problem that was not addressed in the text below,
+% please email me (Torben Noto) at torben.noto@gmail.com with questions.
+% I'd be happy to help you get this working.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
 %% SETUP:
 % To use BreathMetrics, simply add this directory and all of its 
 % subdirectories to your matlab path. 
