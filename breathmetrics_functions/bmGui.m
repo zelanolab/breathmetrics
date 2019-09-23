@@ -17,7 +17,7 @@ function newBM = bmGui(bmObj)
 S.myColors=parula(5);
 S.breathSelectMenuColNames={'Breath No.';'Onset';'Offset';'Status';'Note'};
 S.breathEditMenuColNames={'Inhale';'Inhale Pause';'Exhale';'Exhale Pause'};
-S.bmObjInit=bmObj;
+S.bmInit=copy(bmObj);
 % figure params
 myPadding=10;
 
@@ -235,8 +235,8 @@ nBreaths=length(bmObj.inhaleOnsets);
 UserData.nBreaths=nBreaths;
 
 % organize bm params 
-% breathmetrics object
-UserData.bmObj=bmObj;
+% Make copy of initial breathmetrics class
+UserData.bmObj=copy(S.bmInit);
 
 % params for breath select menu
 

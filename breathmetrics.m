@@ -1,10 +1,18 @@
- classdef breathmetrics < handle 
-    % VERSION: 1.1 6/29/2018 
+ classdef breathmetrics < matlab.mixin.Copyable
+    % Version 2.0 9/23/2019
+    %
     % Created by The Zelano Lab
+    %
     % This class takes in a respiratory trace and sampling rate and
     % contains methods for analysis and visualization of several features
     % of respiration that can be derived. See help in individual methods for
     % details.
+    % Version 1.1 created on 6/29/2018 
+    %
+    % IMPORTANT NOTE:
+    % breathmetrics acts as a handle, meaning that if you set another
+    % variable to it, changing its properties will change the properties of
+    % BOTH OBJECTS. If you want to make a copy TODO
 
     
     % PARAMETERS
@@ -131,16 +139,16 @@
         
         %%% Preprocessing Methods %%%
         
-        function validParams = checkClassInputs(bm)
+        function validParams = checkClassInputs(Bm)
             % Helper function to check if class inputs are valid.
             respErrorMessage = ['Respiratory data must be in the form '...
                         'of a 1 x N vector. Please check that your ' ...
                         'data is in the correct format.'];
                     
-            if isnumeric(bm.rawRespiration)
-                if length(size(bm.rawRespiration)) == 2
-                    if size(bm.rawRespiration,1) ~= 1
-                        bm.rawRespiration = bm.rawRespiration';
+            if isnumeric(Bm.rawRespiration)
+                if length(size(Bm.rawRespiration)) == 2
+                    if size(Bm.rawRespiration,1) ~= 1
+                        Bm.rawRespiration = Bm.rawRespiration';
                     end
                     respCheck=1;
                 else
@@ -155,8 +163,8 @@
             srateErrorMessage = ['Sampling rates greater than 5000 hz ' ...
                     'and less than 20 hz are not supported at this ' ...
                     'time. Please resample your data and try again.'];
-            if isnumeric(bm.srate)
-                if bm.srate > 5000 || bm.srate < 20
+            if isnumeric(Bm.srate)
+                if Bm.srate > 5000 || Bm.srate < 20
                     srateCheck=0;
                     error(srateErrorMessage);
                 else
@@ -179,7 +187,7 @@
                 '''rodentThermocouple'' as the third input arguement' ...
                 ' for BreathMetrics. Errors will occur if this is not'...
                 ' done properly'];
-            if ismember(bm.dataType,supportedDataTypes)
+            if ismember(Bm.dataType,supportedDataTypes)
                 typeCheck=1;
             else
                 typeCheck=0;
@@ -189,7 +197,7 @@
             validParams = sum([respCheck,srateCheck, typeCheck]) == 3;
         end
         
-        function bm = correctRespirationToBaseline(bm, method, ...
+        function Bm = correctRespirationToBaseline(Bm, method, ...
                 zScore, verbose)
             % Corrects respiratory traces to baseline by removing offsets, 
             % global linear trends and temporary drifts
@@ -225,18 +233,18 @@
             end
             
             % first remove any global linear trend in data;
-            thisResp = detrend(bm.smoothedRespiration);
+            thisResp = detrend(Bm.smoothedRespiration);
             
             %find mean resp
             respMean = thisResp - mean(thisResp);
             
             
             if strcmp(method,'simple')
-                bm.baselineCorrectedRespiration = respMean;
+                Bm.baselineCorrectedRespiration = respMean;
                 
             elseif strcmp(method, 'sliding')
                 % for periodic drifts in data
-                srateCorrectedSW = floor(bm.srate * swSize);
+                srateCorrectedSW = floor(Bm.srate * swSize);
                 if verbose == 1
                     fprintf( [ 'Calculating sliding average using ', ...
                         'window size of %i seconds \n' ],swSize);
@@ -245,7 +253,7 @@
                 respSlidingMean=fftSmooth(thisResp, srateCorrectedSW);
                 
                 % subtract sliding mean from respiratory trace
-                bm.baselineCorrectedRespiration = ...
+                Bm.baselineCorrectedRespiration = ...
                     thisResp - respSlidingMean';
             
             else
@@ -256,12 +264,13 @@
             % z score respiratory amplitudes to control for breath sizes
             % when comparing certain features between individuals
             if zScore == 1
-                bm.baselineCorrectedRespiration = ...
-                    zscore(bm.baselineCorrectedRespiration);
+                Bm.baselineCorrectedRespiration = ...
+                    zscore(Bm.baselineCorrectedRespiration);
             end
+            
         end
         
-        function thisResp = whichResp(bm, verbose )
+        function thisResp = whichResp(Bm, verbose )
             % Internal function that decides whether to use baseline 
             % corrected or raw respiratory trace. Not intended to be used 
             % by users
@@ -271,25 +280,25 @@
             
             % Using raw respiration for most calculations is not
             % recommended so notify user.
-            if isempty(bm.baselineCorrectedRespiration)
+            if isempty(Bm.baselineCorrectedRespiration)
                 disp(['No baseline corrected respiration found.' ...
                     'Using smoothed respiration.'])
                 disp(['Non-baseline corrected data can give ' ...
                     'inaccurate estimations of breath onsets and volumes'])
                 disp(['Use correctRespToBaseline to remove drifts' ...
                     ' or offsets in the data'])
-                thisResp = bm.smoothedRespiration;
+                thisResp = Bm.smoothedRespiration;
             else
                 if verbose == 1
                     disp('Using baseline corrected respiration');
                 end
-                thisResp = bm.baselineCorrectedRespiration;
+                thisResp = Bm.baselineCorrectedRespiration;
             end
         end
         
         %%% Feature Extraction Methods %%%
         
-        function bm = findExtrema(bm, verbose)
+        function Bm = findExtrema(Bm, verbose)
             % Estimate peaks and troughs in respiratory data.
             % PARAMETERS
             % bm : BreathMetrics object
@@ -300,7 +309,7 @@
                 verbose = 0;
             end
             
-            thisResp = whichResp(bm, verbose);
+            thisResp = whichResp(Bm, verbose);
             
             if verbose
                 disp('to find extrema');
@@ -311,33 +320,33 @@
             
             % peaks and troughs are identified the same way for human
             % airflow and breathing belt recordings
-            if strfind(bm.dataType, 'human')==1
+            if strfind(Bm.dataType, 'human')==1
                 [putativePeaks, putativeTroughs] = ...
-                    findRespiratoryExtrema( thisResp, bm.srate );
+                    findRespiratoryExtrema( thisResp, Bm.srate );
                 
                 
             % same extrema finding for thermocouple and airflow recordings
             % in rodents
-            elseif strfind(bm.dataType, 'rodent')==1
-                srateAdjust = bm.srate/1000;
+            elseif strfind(Bm.dataType, 'rodent')==1
+                srateAdjust = Bm.srate/1000;
                 rodentSWSizes = [floor(5*srateAdjust), ...
                     floor(10 * srateAdjust), floor(20 * srateAdjust), ...
                     floor(50 * srateAdjust)];
                 [putativePeaks, putativeTroughs] = ...
-                    findRespiratoryExtrema( thisResp, bm.srate, ...
+                    findRespiratoryExtrema( thisResp, Bm.srate, ...
                     0, rodentSWSizes );
             end
             
             % The extrema represent the peak flow rates of inhales and 
             % exhales only in airflow recordings.
-            if strcmp(bm.dataType,'humanAirflow') || strcmp(bm.dataType,'rodentAirflow')
+            if strcmp(Bm.dataType,'humanAirflow') || strcmp(Bm.dataType,'rodentAirflow')
                 % indices of extrema
-                bm.inhalePeaks = putativePeaks;
-                bm.exhaleTroughs = putativeTroughs;
+                Bm.inhalePeaks = putativePeaks;
+                Bm.exhaleTroughs = putativeTroughs;
 
                 % values of extrema
-                bm.peakInspiratoryFlows = thisResp(putativePeaks);
-                bm.troughExpiratoryFlows = thisResp(putativeTroughs);
+                Bm.peakInspiratoryFlows = thisResp(putativePeaks);
+                Bm.troughExpiratoryFlows = thisResp(putativeTroughs);
             end
             
             % In human breathing belt recordings, the peaks and troughs 
@@ -345,22 +354,22 @@
             % point where volume has maximized and instantaneously
             % decreases demarcates an exhale. This is unlike zero-crosses 
             % which demarcate breath onsets in airflow recordings.
-            if strcmp(bm.dataType,'humanBB')
-                bm.inhaleOnsets = putativeTroughs;
-                bm.exhaleOnsets = putativePeaks;
+            if strcmp(Bm.dataType,'humanBB')
+                Bm.inhaleOnsets = putativeTroughs;
+                Bm.exhaleOnsets = putativePeaks;
             
             % In rodent thermocouple recordings, the peaks and troughs 
             % represent inhale and exhale onsets, respectively. Inhales
             % decrease the temperature in the nose and the onset is
             % demarcated by the first point this happens - the inflection
             % point of the peaks. Visa versa for exhales.
-            elseif strcmp(bm.dataType,'rodentThermocouple')
-                bm.inhaleOnsets = putativePeaks;
-                bm.exhaleOnsets = putativeTroughs;
+            elseif strcmp(Bm.dataType,'rodentThermocouple')
+                Bm.inhaleOnsets = putativePeaks;
+                Bm.exhaleOnsets = putativeTroughs;
             end
         end
         
-        function bm = findOnsetsAndPauses(bm, verbose )
+        function Bm = findOnsetsAndPauses(Bm, verbose )
             % Find breath onsets and pauses in respiratory recording. 
             % Only valid for analyzing airflow data.
             % PARAMETERS
@@ -371,7 +380,7 @@
                 verbose = 0;
             end
             
-            thisResp = whichResp(bm, verbose);
+            thisResp = whichResp(Bm, verbose);
             
             if verbose
                 disp('to find breath onsets and pauses');
@@ -379,7 +388,7 @@
             
             % Identifying pauses in data with different sampling rates
             % require different binning criteria to identify pauses.
-            nBINS=floor(bm.srate/100);
+            nBINS=floor(Bm.srate/100);
             if nBINS<=20
                 nBINS=20;
             end
@@ -387,15 +396,15 @@
             [theseInhaleOnsets, theseExhaleOnsets, ...
                 theseInhalePauseOnsets, theseExhalePauseOnsets] = ...
                 findRespiratoryPausesAndOnsets(thisResp, ...
-                bm.inhalePeaks, bm.exhaleTroughs,nBINS);
-            bm.inhaleOnsets = theseInhaleOnsets;
-            bm.exhaleOnsets = theseExhaleOnsets;
-            bm.inhalePauseOnsets = theseInhalePauseOnsets;
-            bm.exhalePauseOnsets = theseExhalePauseOnsets;
+                Bm.inhalePeaks, Bm.exhaleTroughs,nBINS);
+            Bm.inhaleOnsets = theseInhaleOnsets;
+            Bm.exhaleOnsets = theseExhaleOnsets;
+            Bm.inhalePauseOnsets = theseInhalePauseOnsets;
+            Bm.exhalePauseOnsets = theseExhalePauseOnsets;
             
         end
         
-        function bm = findInhaleAndExhaleOffsets(bm, verbose )
+        function Bm = findInhaleAndExhaleOffsets(Bm, verbose )
             % finds the end of each inhale, exhale, inhale pause, and
             % exhale pause.
             % Only valid for analyzing airflow data.
@@ -407,31 +416,31 @@
                 verbose = 0;
             end
             
-            thisResp = whichResp(bm, verbose);
+            thisResp = whichResp(Bm, verbose);
             
             if verbose==1
                 disp('to find breath offsets');
             end
             
             [inhaleOffs,exhaleOffs]=findRespiratoryOffsets(thisResp, ...
-                bm.inhaleOnsets, bm.exhaleOnsets, ...
-                bm.inhalePauseOnsets, bm.exhalePauseOnsets);
-            bm.inhaleOffsets=inhaleOffs;
-            bm.exhaleOffsets=exhaleOffs;
+                Bm.inhaleOnsets, Bm.exhaleOnsets, ...
+                Bm.inhalePauseOnsets, Bm.exhalePauseOnsets);
+            Bm.inhaleOffsets=inhaleOffs;
+            Bm.exhaleOffsets=exhaleOffs;
         end
         
-        function bm = findBreathAndPauseDurations(bm)
+        function Bm = findBreathAndPauseDurations(Bm)
             % calculates the duration of each breath and respiratory pause.
             % Only valid for analyzing airflow data.
             [inhaleDurs, exhaleDurs, inhalePauseDurs, ...
-                exhalePauseDurs] = findBreathDurations(bm);
-            bm.inhaleDurations = inhaleDurs;
-            bm.exhaleDurations = exhaleDurs;
-            bm.inhalePauseDurations = inhalePauseDurs;
-            bm.exhalePauseDurations = exhalePauseDurs;
+                exhalePauseDurs] = findBreathDurations(Bm);
+            Bm.inhaleDurations = inhaleDurs;
+            Bm.exhaleDurations = exhaleDurs;
+            Bm.inhalePauseDurations = inhalePauseDurs;
+            Bm.exhalePauseDurations = exhalePauseDurs;
         end
             
-        function bm = findInhaleAndExhaleVolumes(bm, verbose )
+        function Bm = findInhaleAndExhaleVolumes(Bm, verbose )
             % estimates inhale and exhale volumes.
             % Only valid for analyzing airflow data.
             
@@ -443,20 +452,20 @@
                 verbose = 0;
             end
             
-            thisResp = whichResp(bm, verbose);
+            thisResp = whichResp(Bm, verbose);
             
             if verbose
                 disp('to calculate breath volumes');
             end
             
             [inhaleVols,exhaleVols] = findRespiratoryVolumes( ...
-                thisResp, bm.srate, bm.inhaleOnsets, bm.exhaleOnsets, ...
-                bm.inhaleOffsets, bm.exhaleOffsets);
-            bm.inhaleVolumes = inhaleVols;
-            bm.exhaleVolumes = exhaleVols;
+                thisResp, Bm.srate, Bm.inhaleOnsets, Bm.exhaleOnsets, ...
+                Bm.inhaleOffsets, Bm.exhaleOffsets);
+            Bm.inhaleVolumes = inhaleVols;
+            Bm.exhaleVolumes = exhaleVols;
         end
         
-        function bm = getSecondaryFeatures( bm, verbose )
+        function Bm = getSecondaryFeatures( Bm, verbose )
             % Estimates all features that can be caluclated using the
             % parameters above. Assumes that every valid feature for this 
             % data type has already been calculated.
@@ -471,24 +480,24 @@
                 % are caluclated.
                 verbose=1;
             end
-            respStats  = getSecondaryRespiratoryFeatures( bm, verbose );
-            bm.secondaryFeatures = respStats;
-            bm.checkFeatureEstimations();
+            respStats  = getSecondaryRespiratoryFeatures( Bm, verbose );
+            Bm.secondaryFeatures = respStats;
+            Bm.checkFeatureEstimations();
         end
         
-        function dispSecondaryFeatures(bm)
+        function dispSecondaryFeatures(Bm)
             % Print out statistical summary of all features that were 
             % estimated.
             
-            keySet = bm.secondaryFeatures.keys;
+            keySet = Bm.secondaryFeatures.keys;
             disp('Summary of Respiratory Features:')
             for thisKey = 1:length(keySet)
                 fprintf('\n %s : %0.5g \n',keySet{thisKey}, ...
-                    bm.secondaryFeatures(keySet{thisKey}));
+                    Bm.secondaryFeatures(keySet{thisKey}));
             end
         end
         
-        function bm = checkFeatureEstimations(bm)
+        function Bm = checkFeatureEstimations(Bm)
             % checks whether each feature has been estimated
             % sets bm.featureEstimationsComplete to 1 if this is true
             
@@ -507,11 +516,11 @@
                 'baselineCorrectedRespiration';'inhalePeaks';
                 'exhaleTroughs';'secondaryFeatures'};
             
-            if strcmp(bm.dataType,'humanAirflow') || ...
-                    strcmp(bm.dataType,'rodentAirflow')
+            if strcmp(Bm.dataType,'humanAirflow') || ...
+                    strcmp(Bm.dataType,'rodentAirflow')
                 thisFeatureSet = airflowCompleteFeatureSet;
-            elseif strcmp(bm.dataType,'humanBB') || ...
-                    strcmp(bm.dataType,'rodentThermocouple')
+            elseif strcmp(Bm.dataType,'humanBB') || ...
+                    strcmp(Bm.dataType,'rodentThermocouple')
                 thisFeatureSet = otherSignalCompleteFeatureSet;
             else
                 disp('This data type is not recognized.');
@@ -521,7 +530,7 @@
             nMissingFeatures=0;
             for i = 1:length(thisFeatureSet)
                 thisFeature=thisFeatureSet{i};
-                if isempty(bm.(thisFeature))
+                if isempty(Bm.(thisFeature))
                     nMissingFeatures=nMissingFeatures+1;
                     fprintf(['\n Feature: %s has not been calculated' ...
                         '\n'],thisFeature);
@@ -529,12 +538,12 @@
             end
             
             if nMissingFeatures == 0
-                bm.featureEstimationsComplete=1;
+                Bm.featureEstimationsComplete=1;
             end
             
         end
             
-        function bm = estimateAllFeatures( bm, zScore, ...
+        function Bm = estimateAllFeatures( Bm, zScore, ...
                 baselineCorrectionMethod, verbose )
             % Calls methods above to estimate all features of respiration 
             % that can be calculated for this data type.
@@ -561,56 +570,56 @@
                 verbose = 1;
             end
             
-            if strcmp(bm.dataType,'humanAirflow') || ...
-                    strcmp(bm.dataType,'rodentAirflow')
+            if strcmp(Bm.dataType,'humanAirflow') || ...
+                    strcmp(Bm.dataType,'rodentAirflow')
                 
-                bm.correctRespirationToBaseline(baselineCorrectionMethod, ...
+                Bm.correctRespirationToBaseline(baselineCorrectionMethod, ...
                     zScore, verbose);
-                bm.findExtrema(verbose);
-                bm.findOnsetsAndPauses(verbose);
-                bm.findInhaleAndExhaleOffsets(verbose);
-                bm.findBreathAndPauseDurations();
-                bm.findInhaleAndExhaleVolumes(verbose);
-                bm.getSecondaryFeatures(verbose);
+                Bm.findExtrema(verbose);
+                Bm.findOnsetsAndPauses(verbose);
+                Bm.findInhaleAndExhaleOffsets(verbose);
+                Bm.findBreathAndPauseDurations();
+                Bm.findInhaleAndExhaleVolumes(verbose);
+                Bm.getSecondaryFeatures(verbose);
                 
-            elseif strcmp(bm.dataType,'humanBB') || ...
-                    strcmp(bm.dataType,'rodentThermocouple')
+            elseif strcmp(Bm.dataType,'humanBB') || ...
+                    strcmp(Bm.dataType,'rodentThermocouple')
                 % only subset of features can be calculated in rodent
                 % thermocouple recordings.
-                bm.correctRespirationToBaseline(...
+                Bm.correctRespirationToBaseline(...
                     baselineCorrectionMethod, zScore, verbose);
-                bm.findExtrema(verbose);
-                bm.getSecondaryFeatures(verbose);
+                Bm.findExtrema(verbose);
+                Bm.getSecondaryFeatures(verbose);
             end
-            bm = bm.checkFeatureEstimations();
+            Bm = Bm.checkFeatureEstimations();
         end
         
-        function bm = manualAdjustPostProcess( bm ) 
+        function Bm = manualAdjustPostProcess( Bm ) 
             % call this after manually changing phase onsets to recompute
             % features
             verbose=0;
             
-            if strcmp(bm.dataType,'humanAirflow') || ...
-                    strcmp(bm.dataType,'rodentAirflow')
+            if strcmp(Bm.dataType,'humanAirflow') || ...
+                    strcmp(Bm.dataType,'rodentAirflow')
                 
                 % these must be recomputed if onsets have changed
-                bm.findInhaleAndExhaleOffsets(verbose);
-                bm.findBreathAndPauseDurations();
-                bm.findInhaleAndExhaleVolumes(verbose);
-                bm.getSecondaryFeatures(verbose);
+                Bm.findInhaleAndExhaleOffsets(verbose);
+                Bm.findBreathAndPauseDurations();
+                Bm.findInhaleAndExhaleVolumes(verbose);
+                Bm.getSecondaryFeatures(verbose);
                 
-            elseif strcmp(bm.dataType,'humanBB') || ...
-                    strcmp(bm.dataType,'rodentThermocouple')
+            elseif strcmp(Bm.dataType,'humanBB') || ...
+                    strcmp(Bm.dataType,'rodentThermocouple')
                 % only subset of features can be calculated in rodent
                 % thermocouple recordings.
                 
-                bm.getSecondaryFeatures(verbose);
+                Bm.getSecondaryFeatures(verbose);
             end
-            bm = bm.checkFeatureEstimations();
+            Bm = Bm.checkFeatureEstimations();
             
         end
             
-        function bm = calculateRespiratoryPhase(bm, myFilter, ...
+        function Bm = calculateRespiratoryPhase(Bm, myFilter, ...
                 rateEstimation, verbose)
             % Calculates real-time respiratory phase by computing a 
             % low-pass two-way butterworth filter of the data. Bandwidth 
@@ -641,7 +650,7 @@
                 rateEstimation = 'featureDerived';
             end
             
-            thisResp = bm.whichResp(bm, verbose);
+            thisResp = Bm.whichResp(Bm, verbose);
             
             if verbose
                 disp('to find extrema');
@@ -649,12 +658,12 @@
             
             if strcmp(rateEstimation,'featureDerived')
                 % breathing rate derived from inter-breath interval
-                filtCenter = bm.secondaryFeatures('Breathing Rate');
+                filtCenter = Bm.secondaryFeatures('Breathing Rate');
                 
             elseif strcmp(rateEstimation, 'pspec')
                 % breathing rate derived from power spectrum
                 [Pxx,pspecAxis] = pwelch(thisResp, [], [], [], ...
-                    bm.srate, 'twosided');
+                    Bm.srate, 'twosided');
                 [~, pspecMaxInd] = max(Pxx);
                 
                 filtCenter = pspecAxis(pspecMaxInd); 
@@ -686,12 +695,12 @@
             filteredResp = filtfilt(myFilter, thisResp);
             % calculate instantaneus phase with the angle of the hilbert
             % transformed data.
-            bm.respiratoryPhase = angle(hilbert(filteredResp));
+            Bm.respiratoryPhase = angle(hilbert(filteredResp));
         end
         
         %%% Event Related Potential (ERP) methods %%%
         
-        function bm = calculateERP( bm, eventArray , pre, post, ...
+        function Bm = calculateERP( Bm, eventArray , pre, post, ...
                 appendNaNs,verbose)
             % Calculates an event related potential (ERP) of the 
             % respiratory trace 'pre' and 'post' milliseconds before and 
@@ -718,7 +727,7 @@
                 verbose=0;
             end
             
-            thisResp = bm.whichResp( verbose);
+            thisResp = Bm.whichResp( verbose);
             
             if verbose
                 disp('to calculate ERP');
@@ -726,7 +735,7 @@
             
             
             % convert pre and post from ms into samples
-            toRealMs = bm.srate / 1000;
+            toRealMs = Bm.srate / 1000;
             preSamples = round(pre * toRealMs);
             postSamples = round(post * toRealMs);
 
@@ -734,27 +743,27 @@
                 theseTrialEventInds,theseRejectedEventInds] = ...
                 createRespiratoryERPMatrix( thisResp, eventArray, ...
                 preSamples, postSamples, appendNaNs, verbose );
-            srateStep = 1000 / bm.srate;
+            srateStep = 1000 / Bm.srate;
             
             % if sampling rate is a float, x axis can mismatch. Following
             % code resolves this but can be off by 1 sample.
             tempxAxis = -pre:srateStep:post+srateStep;
 
             if length(tempxAxis) > size(thisERPMatrix,2)
-                bm.ERPxAxis = tempxAxis(1:size(thisERPMatrix,2));
+                Bm.ERPxAxis = tempxAxis(1:size(thisERPMatrix,2));
             elseif length(tempxAxis) < size(thisERPMatrix,2)
                 thisERPMatrix = thisERPMatrix(:,1:length(tempxAxis));
-                bm.ERPxAxis = tempxAxis;
+                Bm.ERPxAxis = tempxAxis;
             end
             
-            bm.ERPMatrix = thisERPMatrix;
-            bm.ERPtrialEvents = theseTrialEvents;
-            bm.ERPrejectedEvents=theseRejectedEvents;
-            bm.ERPtrialEventInds = theseTrialEventInds;
-            bm.ERPrejectedEventInds=theseRejectedEventInds;
+            Bm.ERPMatrix = thisERPMatrix;
+            Bm.ERPtrialEvents = theseTrialEvents;
+            Bm.ERPrejectedEvents=theseRejectedEvents;
+            Bm.ERPtrialEventInds = theseTrialEventInds;
+            Bm.ERPrejectedEventInds=theseRejectedEventInds;
         end
         
-        function bm = calculateResampledERP(bm, eventArray, prePct, ...
+        function Bm = calculateResampledERP(Bm, eventArray, prePct, ...
                 postPct, resampleSize, appendNaNs, verbose, normalizeTo)
             % Calculates an event related potential (ERP) of the 
             % respiratory trace resampled by the average breathing rate to 
@@ -814,20 +823,20 @@
             % normalize between subjects
             switch normalizeTo
                 case 'IBI'
-                    avgResp = bm.secondaryFeatures(...
+                    avgResp = Bm.secondaryFeatures(...
                         'Average Inter-Breath Interval');
                 case 'Inhale'
-                    avgResp = bm.secondaryFeatures(...
+                    avgResp = Bm.secondaryFeatures(...
                         'Average Inhale Duration');
                 case 'Exhale'
-                    avgResp = bm.secondaryFeatures(...
+                    avgResp = Bm.secondaryFeatures(...
                         'Average Exhale Duration');
             end
             
-            rsPre=round(avgResp * bm.srate * prePct);
-            rsPost=round(avgResp * bm.srate * postPct);
+            rsPre=round(avgResp * Bm.srate * prePct);
+            rsPost=round(avgResp * Bm.srate * postPct);
             
-            thisResp = bm.whichResp(bm, verbose);
+            thisResp = Bm.whichResp(Bm, verbose);
             
             if verbose
                 disp('to calculate resampled ERP');
@@ -851,20 +860,20 @@
                     normalizedERP(e,:), resampleInds);
             end
             
-            bm.resampledERPMatrix = thisResampledERPMatrix;
-            bm.trialEvents = theseTrialEvents;
-            bm.rejectedEvents=theseRejectedEvents;
-            bm.trialEventInds = theseTrialEventInds;
-            bm.rejectedEventInds=theseRejectedEventInds;
+            Bm.resampledERPMatrix = thisResampledERPMatrix;
+            Bm.trialEvents = theseTrialEvents;
+            Bm.rejectedEvents=theseRejectedEvents;
+            Bm.trialEventInds = theseTrialEventInds;
+            Bm.rejectedEventInds=theseRejectedEventInds;
             
-            bm.resampledERPxAxis = linspace(-prePct*100, ...
+            Bm.resampledERPxAxis = linspace(-prePct*100, ...
                 postPct*100, resampleSize);
         end
 
         
         %%% Plotting methods %%%
         
-        function fig = plotFeatures(bm, annotate, sizeData)
+        function fig = plotFeatures(Bm, annotate, sizeData)
             % Plots all respiratory features that have been calculated
             % property list is cell of strings with labels of of features 
             % to plot. 
@@ -882,10 +891,10 @@
             if nargin<2
                 annotate=0;
             end
-            fig = plotRespiratoryFeatures(bm, annotate, sizeData);
+            fig = plotRespiratoryFeatures(Bm, annotate, sizeData);
         end
         
-        function fig = plotCompositions(bm, plotType)
+        function fig = plotCompositions(Bm, plotType)
             % Images compositions of each breath in the recording. 
             
             % PARAMETERS:
@@ -899,8 +908,8 @@
             %                     value represents phase and the y-value
             %                     represents duration of phase
             
-            if strcmp(bm.dataType,'humanAirflow') || ...
-                    strcmp(bm.dataType,'rodentAirflow')
+            if strcmp(Bm.dataType,'humanAirflow') || ...
+                    strcmp(Bm.dataType,'rodentAirflow')
                 if nargin < 2
                     disp(['No plot type entered. Use ''raw'', ' ...
                         '''normalized'', or ''line'' to specify.']);
@@ -908,7 +917,7 @@
                     plotType='raw';
                 end
 
-                fig = plotBreathCompositions(bm, plotType);
+                fig = plotBreathCompositions(Bm, plotType);
             else
                 disp(['This function depends on breath durations, ' ...
                 'which is not supported at this time for rodent ' ...
@@ -916,7 +925,7 @@
             end
         end
         
-        function fig = plotRespiratoryERP(bm,simpleOrResampled)
+        function fig = plotRespiratoryERP(Bm,simpleOrResampled)
             % Plots an erp of respiratory data that has been generated
             % using calculateERP or calculateResampledERP. One of these
             % functions must be run prior to calling this function.
@@ -927,11 +936,11 @@
             
             if ischar(simpleOrResampled)
                 if strcmp(simpleOrResampled,'simple')
-                    thisERPMatrix = bm.ERPMatrix;
-                    xAxis = bm.ERPxAxis;
+                    thisERPMatrix = Bm.ERPMatrix;
+                    xAxis = Bm.ERPxAxis;
                 elseif strcmp(simpleOrResampled,'resampled')
-                    thisERPMatrix = bm.resampledERPMatrix;
-                    xAxis = bm.resampledERPxAxis;
+                    thisERPMatrix = Bm.resampledERPMatrix;
+                    xAxis = Bm.resampledERPxAxis;
                 else
                     disp(['Method not recognized. Please set ' ...
                         'SimpleOrResampled to ''simple'' or ' ...
@@ -941,8 +950,8 @@
                 disp(['ERP method not specified. Please set ' ...
                     'SimpleOrResampled to ''simple'' or ' ...
                     '''resampled.'' Proceeding using a standard ERP.' ])
-                thisERPMatrix = bm.ERPMatrix;
-                xAxis = bm.ERPxAxis;
+                thisERPMatrix = Bm.ERPMatrix;
+                xAxis = Bm.ERPxAxis;
                 simpleOrResampled='simple';
             end
             
