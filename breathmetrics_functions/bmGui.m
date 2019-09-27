@@ -11,13 +11,13 @@ function newBM = bmGui(bmObj)
 % returned.
 
 
-
 %%% initialize static parameters %%%
 
 S.myColors=parula(5);
 S.breathSelectMenuColNames={'Breath No.';'Onset';'Offset';'Status';'Note'};
 S.breathEditMenuColNames={'Inhale';'Inhale Pause';'Exhale';'Exhale Pause'};
 S.bmInit=copy(bmObj);
+
 % figure params
 myPadding=10;
 
@@ -469,9 +469,18 @@ try
     % recompute breath durations, volumes, etc.
     newBM.manualAdjustPostProcess();
     close(S.fh);
+    
+    % prompt user to save output variable
+    answer = questdlg('Do you want to write a copy of the output to a file?', ...
+        'Yes', ...
+        'No');
+    if strcmp(answer,'Yes')
+        [file,path]=uiputfile('*.mat');
+        save(fullfile(path,file),'newBM');
+    end
 
 catch
-    newBM=S.bmObjInit;
+    newBM=S.bmInit;
     % if figure is closed without saving.
     disp('No changes saved.');
 end
@@ -582,7 +591,6 @@ S=varargin{3};
 
 UserData=S.fh.UserData;
 
-
 originalVals=UserData.initialBreathEditMat(UserData.thisBreath,:);
 
 UserData.tempPhaseOnsetChanges=originalVals;
@@ -590,6 +598,8 @@ UserData.breathSelectMat{UserData.thisBreath,4}='valid';
 
 set( S.fh, 'UserData', UserData);
 set( S.uit,'Data',S.fh.UserData.breathSelectMat);
+
+% plot it with black line
 plotMeCallback({},{},S,1);
 end
 
@@ -605,14 +615,17 @@ UserData.breathSelectMat{UserData.thisBreath,4}='rejected';
 set( S.fh, 'UserData', UserData);
 set( S.uit,'Data',S.fh.UserData.breathSelectMat);
 
+% plot it with red line
+plotMeCallback({},{},S,1);
+
 end
 
 
-
-% function to plot selected breath
+% function to plot current breath
 function [] = plotMeCallback(varargin)
 
-% Callback function that plots data saved in temporary storage
+% Callback function that plots data for this breath, which is saved in 
+% temporary storage
 S = varargin{3};  % Get the structure.
 bmObj = S.fh.UserData.bmObj; % get bm
 
@@ -663,8 +676,8 @@ thisMidpoint=mean([io,eo]);
 if ~isnan(thisMidpoint)
     nSamplesInRecording=length(bmObj.baselineCorrectedRespiration);
     plottingWindowLims=[...
-        (S.xLims(1)*bmObj.srate+(io*bmObj.srate)),...
-        (S.xLims(2)*bmObj.srate+(eo*bmObj.srate))];
+        round(S.xLims(1)*bmObj.srate+(io*bmObj.srate)),...
+        round(S.xLims(2)*bmObj.srate+(eo*bmObj.srate))];
     
     % make sure plotting window doesn't extend beyond boundaries of 
     % data
@@ -677,7 +690,12 @@ if ~isnan(thisMidpoint)
     end
     plottingWindowInds=plottingWindowLims(1):plottingWindowLims(2);
     
-    timeThisWindow=bmObj.time(plottingWindowInds);
+    
+    try
+        timeThisWindow=bmObj.time(plottingWindowInds);
+    catch
+        keyboard
+    end
     respThisWindow=bmObj.baselineCorrectedRespiration(plottingWindowInds);
     
     newXLims=[min(timeThisWindow),max(timeThisWindow)];
@@ -692,9 +710,12 @@ if ~isnan(thisMidpoint)
     
     hold(S.ax,'on');
     
-    
     % update labels and title
-    titleText=sprintf('Breath %i (%s)', UserData.thisBreath,breathInfo);
+    titleText=sprintf('Breath %i/%i (%s)', ...
+        UserData.thisBreath,...
+        UserData.nBreaths,...
+        breathInfo);
+    
     set(get(S.ax,'XLabel'),'String','Time (S)');
     set(get(S.ax,'YLabel'),'String','Amplitude');
     set(get(S.ax,'title'),'String',titleText);
@@ -759,8 +780,16 @@ if ~isnan(thisMidpoint)
         set(S.phaseEditors(ph),'String',num2str(thisPhaseOnset));
         
         if ~isnan(thisPhaseOnset)
+            thisPhaseInd=round(thisPhaseOnset*bmObj.srate);
+            if thisPhaseInd==0
+                thisPhaseInd=1;
+            end
             
-            thisPhaseYInd=bmObj.baselineCorrectedRespiration(1,round(thisPhaseOnset*bmObj.srate));
+            if thisPhaseInd>length(bmObj.baselineCorrectedRespiration)
+                thisPhaseInd=length(bmObj.baselineCorrectedRespiration);
+            end
+            
+            thisPhaseYInd=bmObj.baselineCorrectedRespiration(1,thisPhaseInd);
             
             % make draggable points for this breath
             dp=drawpoint(S.ax,...
@@ -976,7 +1005,7 @@ if changesAreValid
         set( S.fh, 'UserData', UserData);
         set( S.uit,'Data',S.fh.UserData.breathSelectMat);
     else
-        warndlg('No changes have been made. Update the plot after you move a point before attempting to save.');
+%         warndlg('No changes have been made. Update the plot after you move a point before attempting to save.');
     end
 end
 end
@@ -1025,7 +1054,8 @@ end
 if UserData.thisBreath==1
     inhaleMinBoundary=1;
 else
-    inhaleMinBoundary=UserData.bmObj.exhaleOnsets(UserData.thisBreath-1);
+    % last exhale
+    inhaleMinBoundary=UserData.breathEditMat(UserData.thisBreath-1,3)*UserData.bmObj.srate;
 end
 
 if isInhalePause
@@ -1066,7 +1096,8 @@ end
 if UserData.thisBreath==UserData.nBreaths
     exhaleMaxBoundary=recordingLen;
 else
-    exhaleMaxBoundary=UserData.bmObj.inhaleOnsets(UserData.thisBreath+1);
+    % next inhale
+    exhaleMaxBoundary=UserData.breathEditMat(UserData.thisBreath+1,1)*UserData.bmObj.srate;
 end
 
 % compare value to lims
@@ -1084,7 +1115,8 @@ if isExhalePause
     if UserData.thisBreath==UserData.nBreaths
         epMaxBoundary=recordingLen;
     else
-        epMaxBoundary=UserData.bmObj.inhaleOnsets(UserData.thisBreath+1);
+        % next inhale
+        epMaxBoundary=UserData.breathEditMat(UserData.thisBreath+1,1)*UserData.bmObj.srate;
     end
     
     % compare to lims

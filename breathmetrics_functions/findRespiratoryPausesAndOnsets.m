@@ -13,7 +13,6 @@ function [ inhaleOnsets, exhaleOnsets, inhalePauseOnsets, ...
 %   6. Find exhale onset in peak-to-trough window where it crosses baseline.
 %   7. Repeat.
 
-%keyboard
 % Assume that there is exactly one onset per breath
 inhaleOnsets = zeros(1, length(myPeaks));
 exhaleOnsets = zeros(1, length(myPeaks));
@@ -56,6 +55,7 @@ SIMPLE_ZERO_CROSS = mean(resp);
 % head and tail onsets are hard to estimate without lims. use average
 % breathing interval in these cases.
 TAIL_ONSET_LIMS = floor(mean(diff(myPeaks)));
+
 
 if myPeaks(1) > TAIL_ONSET_LIMS
     firstZeroCrossBoundary = myPeaks(1)-TAIL_ONSET_LIMS;
