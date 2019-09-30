@@ -29,11 +29,13 @@ Breathmetrics is a matlab class with functions that serve 3 purposes:
 
 #### GUI for Manually Inspecting, Editing, and Annotating Respiratory Data
 
-<img src="img/readme_gui_fig.png" width="800" />
+<img src="img/updated_readme_gui_fig.png" width="800" />
 
 ## Installation
 To use this toolbox, simply download or clone this repository and append it to your Matlab path. 
-(see Matlab's pathtool function for help)
+(see Matlab's pathtool function for help).
+If you have an older version of breathmetrics installed, make sure that you remove it from your path. The safest option is to just delete it. 
+Type 'which breathmetrics' to make sure that you are using the current version.
 
 ## Usage and Demo
 
@@ -50,16 +52,20 @@ To reproduce the figures above, navigate to the breathmetrics directory and run 
 
 ```matlab
 respiratoryData = load('sample_data.mat');
+
 respiratoryTrace = respiratoryData.resp;
 srate = respiratoryData.srate;
 dataType = 'humanAirflow';
-bm = breathmetrics(respiratoryTrace, srate, dataType);
-bm.estimateAllFeatures();
-fig = bm.plotCompositions('raw');
-fig = bm.plotFeatures({'extrema','maxflow'});
-fig = bm.plotCompositions('normalized');
-fig = bm.plotCompositions('line');
-bm.launchGUI();
+
+bmObj = breathmetrics(respiratoryTrace, srate, dataType);
+bmObj.estimateAllFeatures();
+
+fig = bmObj.plotCompositions('raw');
+fig = bmObj.plotFeatures({'extrema','maxflow'});
+fig = bmObj.plotCompositions('normalized');
+fig = bmObj.plotCompositions('line');
+
+cleanedBmObj=bmGui(bmObj);
 ```
 
 ## Dependencies:
@@ -81,6 +87,7 @@ Only the instantaneus phase estimation function (which is not recommended) is de
 * Andrew Moberly (Rodent Data)
 * Leslie Kay (Rodent Data)
 * Sam Cooler (GUI assistance)
+* Goodwin Lane (Testing)
 
 ## Reference
 A PDF of the peer-reviewed paper validating the methods we use here can be found in this directory (NotoBreathmetricsChemicalSenses2018.pdf).
