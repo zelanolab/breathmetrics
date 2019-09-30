@@ -11,122 +11,194 @@ if verbose == 1
     disp('Calculating secondary respiratory features')
 end
 
-% breathing rate is the sampling rate over the average number of samples in
-% between breaths
-breathingRate = Bm.srate/mean(diff(Bm.inhaleOnsets));
+% first find valid breaths
+nBreaths=length(Bm.inhaleOnsets);
+if isempty(Bm.statuses)
+    validBreathInds=1:nBreaths;
+else
+    IndexInvalid = strfind(Bm.statuses,'rejected');
+    invalidBreathInds = find(not(cellfun('isempty',IndexInvalid)));
+    validBreathInds=setdiff(1:nBreaths,invalidBreathInds);
+    if isempty(validBreathInds)
+        warndlg('No valid breaths found. If the status of a breath is set to ''rejected'', it will not be used to compute secondary features');
+    end
+end
 
-% inter-breath interval is the average number of samples between breaths
-% over the sampling rate
-interBreathInterval = mean(diff(Bm.inhaleOnsets))/Bm.srate;
+nValidBreaths=length(validBreathInds);
+
+%%% Breathing Rate %%%
+% breathing rate is the sampling rate over the average number of samples 
+% in between breaths.
+
+% this is tricky when certain breaths have been rejected
+breathDiffs=nan(1,1);
+vbIter=1;
+for i = 1:nValidBreaths-1
+    thisBreath=validBreathInds(i);
+    nextBreath=validBreathInds(i+1);
+    % if there is no rejected breath between these breaths, they can be
+    % used to compute breathing rate.
+    if nextBreath == thisBreath+1
+        breathDiffs(1,vbIter)=Bm.inhaleOnsets(nextBreath)-Bm.inhaleOnsets(thisBreath);
+        vbIter=vbIter+1;
+    end
+end
+
+breathingRate = Bm.srate/mean(breathDiffs);
+
+%%% Inter-Breath Interval %%%
+% inter-breath interval is the inverse of breathing rate
+interBreathInterval = 1/breathingRate;
+
+%%% Coefficient of Variation of Breathing Rate %%% 
+% this describes variability in time between breaths
+cvBreathingRate = std(breathDiffs)/mean(breathDiffs);
 
 if strcmp(Bm.dataType,'humanAirflow') || strcmp(Bm.dataType,'rodentAirflow')
-    % exclude outlier breaths and calculate peak flow rates
-    validInhaleFlows = Bm.peakInspiratoryFlows(Bm.peakInspiratoryFlows ...
-        > mean(Bm.peakInspiratoryFlows) - 2 * std(Bm.peakInspiratoryFlows) ...
-        & Bm.peakInspiratoryFlows< mean(Bm.peakInspiratoryFlows) + 2 * ...
-        std(Bm.peakInspiratoryFlows));
-    validExhaleFlows = Bm.troughExpiratoryFlows(Bm.troughExpiratoryFlows ...
-        > mean(Bm.troughExpiratoryFlows) - 2 * ... 
-        std(Bm.troughExpiratoryFlows) & Bm.troughExpiratoryFlows < ...
-        mean(Bm.troughExpiratoryFlows) + 2 * std(Bm.troughExpiratoryFlows));
-    avgMaxInhaleFlows = mean(validInhaleFlows);
-    avgMaxExhaleFlows = mean(validExhaleFlows);
+    % the following features can only be computed for airflow data
+    
+    %%% Peak Flow Rates %%%
+    % the maximum rate of airflow at each inhale and exhale
+    
+    % inhales
+    validInhaleFlows=excludeOutliers(Bm.peakInspiratoryFlows, validBreathInds);
+    avgMaxInhaleFlow = mean(validInhaleFlows);
+    
+    % exhales
+    validExhaleFlows=excludeOutliers(Bm.troughExpiratoryFlows, validBreathInds);
+    avgMaxExhaleFlow = mean(validExhaleFlows);
 
-    % exclude outlier breaths and calculate breath volumes
-    validInhaleVolumes = Bm.inhaleVolumes(Bm.inhaleVolumes > ...
-        nanmean(Bm.inhaleVolumes) - 2 * std(Bm.inhaleVolumes) & ...
-        Bm.inhaleVolumes< mean(Bm.inhaleVolumes) + 2 * std(Bm.inhaleVolumes));
-    validExhaleVolumes = Bm.exhaleVolumes(Bm.exhaleVolumes > ...
-        nanmean(Bm.exhaleVolumes) - 2 * nanstd(Bm.exhaleVolumes) & ...
-        Bm.exhaleVolumes< nanmean(Bm.exhaleVolumes) + 2 * ...
-        nanstd(Bm.exhaleVolumes));
-    avgInhaleVolumes = mean(validInhaleVolumes);
-    avgExhaleVolumes = mean(validExhaleVolumes);
+    %%% Breath Volumes %%%
+    % the volume of each breath is the integral of the airflow
+    
+    % inhales
+    validInhaleVolumes=excludeOutliers(Bm.inhaleVolumes, validBreathInds);
+    avgInhaleVolume = mean(validInhaleVolumes);
+    
+    % exhales
+    validExhaleVolumes=excludeOutliers(Bm.exhaleVolumes, validBreathInds);
+    avgExhaleVolume = mean(validExhaleVolumes);
 
-    % average exhale volume must always be negative. tidal volume is total air
-    % displaced by inhale and exhale
-    avgTidalVolume = avgInhaleVolumes + avgExhaleVolumes;
+    %%% Tidal volume %%%
+    % tidal volume is the total air displaced by inhale and exhale
+    avgTidalVolume = avgInhaleVolume + avgExhaleVolume;
 
+    %%% Minute Ventilation %%%
     % minute ventilation is the product of respiration rate and tidal volume
-    minuteVentilation = breathingRate*avgTidalVolume;
+    minuteVentilation = breathingRate * avgTidalVolume;
 
-    % duty cycle is the percent of each breathing cycle that was spent inhaling
-    avgInhaleLength = nanmean(Bm.inhaleLengths);
-    avgExhaleLength = nanmean(Bm.exhaleLengths);
+    %%% Duty Cycle %%%
+    % duty cycle is the percent of each breathing cycle that was spent in
+    % a phase
+    
+    % get avg duration of each phase
+    avgInhaleDuration = nanmean(Bm.inhaleDurations);
+    avgExhaleDuration = nanmean(Bm.exhaleDurations);
+    
+    % because pauses don't necessarily occur on every breath, multiply this
+    % value by total number that occured.
+    pctInhalePause=sum(~isnan(Bm.inhalePauseDurations))/nValidBreaths;
+    avgInhalePauseDuration = nanmean(Bm.inhalePauseDurations(validBreathInds)) * pctInhalePause;
+    
+    pctExhalePause=sum(~isnan(Bm.exhalePauseDurations))/nValidBreaths;
+    avgExhalePauseDuration = nanmean(Bm.exhalePauseDurations(validBreathInds)) * pctExhalePause;
 
-    dutyCycle = avgInhaleLength / interBreathInterval;
+    inhaleDutyCycle = avgInhaleDuration / interBreathInterval;
+    inhalePauseDutyCycle = avgInhalePauseDuration / interBreathInterval;
+    exhaleDutyCycle = avgExhaleDuration / interBreathInterval;
+    exhalePauseDutyCycle = avgExhalePauseDuration / interBreathInterval;
 
-    CVInhaleLengths = nanstd(Bm.inhaleLengths)/avgInhaleLength;
+    CVInhaleDuration = nanstd(Bm.inhaleDurations)/avgInhaleDuration;
+    CVInhalePauseDuration = nanstd(Bm.inhalePauseDurations)/avgInhalePauseDuration;
+    CVExhaleDuration = nanstd(Bm.exhaleDurations)/avgExhaleDuration;
+    CVExhalePauseDuration = nanstd(Bm.exhalePauseDurations)/avgExhalePauseDuration;
 
-    pctInhalePauses = sum(Bm.inhalePauseOnsets > 0 ) / ...
-        length(Bm.inhalePauseOnsets);
-
-    avgInhalePauseLength = nanmean(Bm.inhalePauseLengths(Bm.inhalePauseLengths>0));
-    if isempty(avgInhalePauseLength) || isnan(avgInhalePauseLength)
-            avgInhalePauseLength=0;
+    % if there were no pauses, the average pause duration is 0, not nan
+    if isempty(avgInhalePauseDuration) || isnan(avgInhalePauseDuration)
+            avgInhalePauseDuration=0;
     end
 
-    pctExhalePauses = sum(Bm.exhalePauseOnsets > 0 ) / ...
-            length(Bm.exhalePauseOnsets);
-
-    avgExhalePauseLength = nanmean(Bm.exhalePauseLengths(Bm.exhalePauseLengths>0));
-    if isempty(avgExhalePauseLength) || isnan(avgExhalePauseLength)
-            avgExhalePauseLength=0;
+    if isempty(avgExhalePauseDuration) || isnan(avgExhalePauseDuration)
+            avgExhalePauseDuration=0;
     end
 
     % coefficient of variation in breath size describes variability of breath
     % sizes
-    CVTidalVolumes = std(validInhaleVolumes)/mean(validInhaleVolumes);
+    CVTidalVolume = std(validInhaleVolumes)/mean(validInhaleVolumes);
     
 end
 
-% coefficient of variation of breathing rate describes variability in time
-% between breaths
-cvBreathingRate = std(diff(Bm.inhaleOnsets))/mean(diff(Bm.inhaleOnsets));
-
 
 % assigning values for output
+
 if strcmp(Bm.dataType,'humanAirflow') || strcmp(Bm.dataType,'rodentAirflow')
     keySet= {
         'Breathing Rate';
         'Average Inter-Breath Interval';
+        
         'Average Peak Inspiratory Flow';
         'Average Peak Expiratory Flow';
+        
         'Average Inhale Volume';
         'Average Exhale Volume';
         'Average Tidal Volume';
         'Minute Ventilation';
-        'Duty Cycle';
-        'Coefficient of Variation of Duty Cycle';
-        'Average Inhale Length';
-        'Average Inhale Pause Length';
-        'Average Exhale Length';
-        'Average Exhale Pause Length';
+        
+        'Duty Cycle of Inhale';
+        'Duty Cycle of Inhale Pause';
+        'Duty Cycle of Exhale';
+        'Duty Cycle of Exhale Pause';
+        
+        'Coefficient of Variation of Inhale Duty Cycle';
+        'Coefficient of Variation of Inhale Pause Duty Cycle';
+        'Coefficient of Variation of Exhale Duty Cycle';
+        'Coefficient of Variation of Exhale Pause Duty Cycle';
+        
+        'Average Inhale Duration';
+        'Average Inhale Pause Duration';
+        'Average Exhale Duration';
+        'Average Exhale Pause Duration';
+        
         'Percent of Breaths With Inhale Pause';
         'Percent of Breaths With Exhale Pause';
+        
         'Coefficient of Variation of Breathing Rate';
         'Coefficient of Variation of Breath Volumes';
+        
         };
 
     valueSet={
         breathingRate; 
         interBreathInterval; 
-        avgMaxInhaleFlows; 
-        avgMaxExhaleFlows; 
-        avgInhaleVolumes; 
-        avgExhaleVolumes; 
+        
+        avgMaxInhaleFlow; 
+        avgMaxExhaleFlow; 
+        
+        avgInhaleVolume; 
+        avgExhaleVolume; 
         avgTidalVolume; 
         minuteVentilation; 
-        dutyCycle; 
-        CVInhaleLengths;
-        avgInhaleLength;
-        avgInhalePauseLength;
-        avgExhaleLength;
-        avgExhalePauseLength;
-        pctInhalePauses
-        pctExhalePauses;
+        
+        inhaleDutyCycle; 
+        inhalePauseDutyCycle; 
+        exhaleDutyCycle; 
+        exhalePauseDutyCycle; 
+        
+        CVInhaleDuration;
+        CVInhalePauseDuration;
+        CVExhaleDuration;
+        CVExhalePauseDuration;
+        
+        avgInhaleDuration;
+        avgInhalePauseDuration;
+        avgExhaleDuration;
+        avgExhalePauseDuration;
+        
+        pctInhalePause
+        pctExhalePause;
+        
         cvBreathingRate; 
-        CVTidalVolumes;
+        CVTidalVolume;
         };
 elseif strcmp(Bm.dataType,'humanBB') || strcmp(Bm.dataType,'rodentThermocouple') 
     keySet= {
@@ -153,3 +225,10 @@ end
 
 end
 
+function validVals=excludeOutliers(origVals,validBreathInds)
+% rejects values exceeding 2 stds from the mean
+    upperBound=nanmean(origVals) + 2 * nanstd(origVals);
+    lowerBound=nanmean(origVals) - 2 * nanstd(origVals);
+    validValInds = find(origVals(origVals > lowerBound & origVals < upperBound));
+    validVals = origVals(intersect(validValInds, validBreathInds));
+end

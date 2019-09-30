@@ -36,50 +36,54 @@ if strcmp(plotType, 'normalized')
     for b = 1:nBreaths
         ind = 1;
         thisBreathComposition = zeros(1,MATRIX_SIZE);
-        thisInhaleLength = Bm.inhaleLengths(b);
-        thisInhalePauseLength = Bm.inhalePauseLengths(b);
-        if isnan(thisInhalePauseLength)
-            thisInhalePauseLength=0;
+        thisInhaleDur = Bm.inhaleDurations(b);
+        thisInhalePauseDur = Bm.inhalePauseDurations(b);
+        if isnan(thisInhalePauseDur)
+            thisInhalePauseDur=0;
         end
-        thisExhaleLength = Bm.exhaleLengths(b);
-        if isnan(thisExhaleLength)
-            thisExhaleLength=0;
+        thisExhaleDur = Bm.exhaleDurations(b);
+        if isnan(thisExhaleDur)
+            thisExhaleDur=0;
         end
-        thisExhalePauseLength = Bm.exhalePauseLengths(b);
-        if isnan(thisExhalePauseLength)
-            thisExhalePauseLength=0;
-        end
-        totalPoints = sum([thisInhaleLength, ... 
-            thisInhalePauseLength, thisExhaleLength, ...
-            thisExhalePauseLength]);
-        normedInhaleLength = round((thisInhaleLength/totalPoints) ...
-            * MATRIX_SIZE);
-        normedInhalePauseLength = ...
-            round((thisInhalePauseLength/totalPoints) * MATRIX_SIZE);
-        normedExhaleLength = round((thisExhaleLength/totalPoints)*MATRIX_SIZE);
-        normedExhalePauseLength = ...
-            round((thisExhalePauseLength/totalPoints) * MATRIX_SIZE);
-        sumCheck = sum([normedInhaleLength, ...
-            normedInhalePauseLength, normedExhaleLength, ...
-            normedExhalePauseLength]);
-        % sometimes rounding is off by 1
-        if sumCheck>MATRIX_SIZE
-            normedExhaleLength=normedExhaleLength-1;
-        elseif sumCheck<MATRIX_SIZE
-            normedExhaleLength=normedExhaleLength+1;
-        end
-
-        thisBreathComposition(1,ind:normedInhaleLength)=1;
-        ind=normedInhaleLength;
-        if normedInhalePauseLength>0
-            thisBreathComposition(1,ind+1:ind+normedInhalePauseLength)=2;
-            ind=ind+normedInhalePauseLength;
+        thisExhalePauseDur = Bm.exhalePauseDurations(b);
+        if isnan(thisExhalePauseDur)
+            thisExhalePauseDur=0;
         end
         
-        thisBreathComposition(1,ind+1:ind+normedExhaleLength)=3;
-        ind=ind+normedExhaleLength;
-        if normedExhalePauseLength>0
-            thisBreathComposition(1,ind+1:ind+normedExhalePauseLength)=4;
+        totalPoints = sum([thisInhaleDur, ...
+            thisInhalePauseDur, thisExhaleDur, ...
+            thisExhalePauseDur]);
+        
+        normedInhaleDur = round((thisInhaleDur/totalPoints) ...
+            * MATRIX_SIZE);
+        normedInhalePauseDur = ...
+            round((thisInhalePauseDur/totalPoints) * MATRIX_SIZE);
+        normedExhaleDur = round((thisExhaleDur/totalPoints)*MATRIX_SIZE);
+        normedExhalePauseDur = ...
+            round((thisExhalePauseDur/totalPoints) * MATRIX_SIZE);
+        
+        sumCheck = sum([normedInhaleDur, ...
+            normedInhalePauseDur, normedExhaleDur, ...
+            normedExhalePauseDur]);
+        
+        % sometimes rounding is off by 1
+        if sumCheck>MATRIX_SIZE
+            normedExhaleDur=normedExhaleDur-1;
+        elseif sumCheck<MATRIX_SIZE
+            normedExhaleDur=normedExhaleDur+1;
+        end
+
+        thisBreathComposition(1,ind:normedInhaleDur)=1;
+        ind=normedInhaleDur;
+        if normedInhalePauseDur>0
+            thisBreathComposition(1,ind+1:ind+normedInhalePauseDur)=2;
+            ind=ind+normedInhalePauseDur;
+        end
+        
+        thisBreathComposition(1,ind+1:ind+normedExhaleDur)=3;
+        ind=ind+normedExhaleDur;
+        if normedExhalePauseDur>0
+            thisBreathComposition(1,ind+1:ind+normedExhalePauseDur)=4;
         end
         breathMatrix(b,:)=thisBreathComposition;
     end
@@ -121,30 +125,30 @@ elseif strcmp(plotType,'raw')
     for b=1:nBreaths
         thisBreathComposition = ones(1,MATRIX_SIZE)*4;
         %this_breath_comp(:)=nan;
-        thisInhaleLength = round((Bm.inhaleLengths(b)/ ...
+        thisInhaleDur = round((Bm.inhaleDurations(b)/ ...
             maxBreathSize) * MATRIX_SIZE);
-        thisBreathComposition(1, 1:thisInhaleLength) = 0;
-        ind = thisInhaleLength + 1;
-        thisInhalePauseLength = round((Bm.inhalePauseLengths(b) / ...
+        thisBreathComposition(1, 1:thisInhaleDur) = 0;
+        ind = thisInhaleDur + 1;
+        thisInhalePauseDur = round((Bm.inhalePauseDurations(b) / ...
             maxBreathSize) * MATRIX_SIZE);
-        if isnan(thisInhalePauseLength)
-            thisInhalePauseLength = 0;
+        if isnan(thisInhalePauseDur)
+            thisInhalePauseDur = 0;
         end
-        thisBreathComposition(1,ind:ind + thisInhalePauseLength) = 1;
-        ind = ind + thisInhalePauseLength;
-        thisExhaleLength = round((Bm.exhaleLengths(b) / ...
+        thisBreathComposition(1,ind:ind + thisInhalePauseDur) = 1;
+        ind = ind + thisInhalePauseDur;
+        thisExhaleDur = round((Bm.exhaleDurations(b) / ...
             maxBreathSize) * MATRIX_SIZE);
-        if isnan(thisExhaleLength)
-            thisExhaleLength=0;
+        if isnan(thisExhaleDur)
+            thisExhaleDur=0;
         end
-        thisBreathComposition(1, ind:ind + thisExhaleLength) = 2;
-        ind = ind + thisExhaleLength;
-        thisExhalePauseLength = round((Bm.exhalePauseLengths(b) / ...
+        thisBreathComposition(1, ind:ind + thisExhaleDur) = 2;
+        ind = ind + thisExhaleDur;
+        thisExhalePauseDur = round((Bm.exhalePauseDurations(b) / ...
             maxBreathSize) * MATRIX_SIZE);
-        if isnan(thisExhalePauseLength)
-            thisExhalePauseLength=0;
+        if isnan(thisExhalePauseDur)
+            thisExhalePauseDur=0;
         end
-        thisBreathComposition(1, ind:ind + thisExhalePauseLength) = 3;
+        thisBreathComposition(1, ind:ind + thisExhalePauseDur) = 3;
         if length(thisBreathComposition)>MATRIX_SIZE
             thisBreathComposition = ...
                 thisBreathComposition(1, 1:MATRIX_SIZE);
@@ -181,37 +185,37 @@ elseif strcmp(plotType,'line')
     MY_COLORS = parula(nBreaths);
     for b=1:nBreaths
         ind=1;
-        thisInhaleLength = Bm.inhaleLengths(b);
+        thisInhaleDur = Bm.inhaleDurations(b);
         % there is always an inhale in a breath
-        plotSet = [ind, thisInhaleLength];
+        plotSet = [ind, thisInhaleDur];
         ind=ind+1;
 
         %there is sometimes an inhale pause
-        thisInhalePauseLength = Bm.inhalePauseLengths(b);
-        if ~isnan(thisInhalePauseLength)
-            plotSet(ind,:) = [2, thisInhalePauseLength];
+        thisInhalePauseDur = Bm.inhalePauseDurations(b);
+        if ~isnan(thisInhalePauseDur)
+            plotSet(ind,:) = [2, thisInhalePauseDur];
             ind=ind+1;
         end
 
-        thisExhaleLength = Bm.exhaleLengths(b);
-        plotSet(ind,:) = [3, thisExhaleLength];
+        thisExhaleDur = Bm.exhaleDurations(b);
+        plotSet(ind,:) = [3, thisExhaleDur];
         ind=ind+1;
-        thisExhalePauseLength = Bm.exhalePauseLengths(b);
-        if ~isnan(thisExhalePauseLength)
-            plotSet(ind,:) = [4, thisExhalePauseLength];
+        thisExhalePauseDur = Bm.exhalePauseDurations(b);
+        if ~isnan(thisExhalePauseDur)
+            plotSet(ind,:) = [4, thisExhalePauseDur];
         end
         plot(plotSet(:,1), plotSet(:,2), 'color', MY_COLORS(b,:));
         scatter(plotSet(:,1), plotSet(:,2), ...
                 'Marker','s','MarkerFaceColor', MY_COLORS(b,:), ...
                 'MarkerEdgeColor','none');
     end
-    inhaleStd = std(Bm.inhaleLengths);
-    inhalePauseStd = nanstd(Bm.inhaleLengths);
-    exhaleStd = std(Bm.exhaleLengths);
-    exhalePauseStd = nanstd(Bm.exhaleLengths);
-    allMeans = [mean(Bm.inhaleLengths), ...
-        nanmean(Bm.inhalePauseLengths), mean(Bm.exhaleLengths), ...
-        nanmean(Bm.exhalePauseLengths)];
+    inhaleStd = std(Bm.inhaleDurations);
+    inhalePauseStd = nanstd(Bm.inhaleDurations);
+    exhaleStd = std(Bm.exhaleDurations);
+    exhalePauseStd = nanstd(Bm.exhaleDurations);
+    allMeans = [mean(Bm.inhaleDurations), ...
+        nanmean(Bm.inhalePauseDurations), mean(Bm.exhaleDurations), ...
+        nanmean(Bm.exhalePauseDurations)];
     allStds = [inhaleStd, inhalePauseStd, exhaleStd, exhalePauseStd];
     errorbar([1,2,3,4], allMeans, allStds, 'Color', 'k', ...
                                              'LineStyle', 'none', ...
@@ -221,7 +225,7 @@ elseif strcmp(plotType,'line')
         'Exhale Durations'; 'Exhale Pause Durations'};
     set(gca,'XTick', [1,2,3,4], 'XTickLabel', xTickLabels);
     ylabel('Time (seconds)');
-    allMaxes = [nanmax(Bm.inhaleLengths),nanmax(Bm.inhalePauseLengths),nanmax(Bm.exhaleLengths),nanmax(Bm.exhalePauseLengths)];
+    allMaxes = [nanmax(Bm.inhaleDurations),nanmax(Bm.inhalePauseDurations),nanmax(Bm.exhaleDurations),nanmax(Bm.exhalePauseDurations)];
     
     ylim([0,max(allMaxes)+0.5]);
     toplineBump=0.2;
@@ -245,32 +249,32 @@ elseif strcmp(plotType, 'hist')
     fig = figure; hold all;
     MY_COLORS = parula(4);
     
-    nBins = floor(length(Bm.inhaleLengths)/5);
+    nBins = floor(length(Bm.inhaleDurations)/5);
     if nBins < 5
         nBins=10;
     end
     % inhale lengths
     subplot(2,2,1)
-    [inhaleCounts, inhaleBins] = hist(Bm.inhaleLengths, nBins);
+    [inhaleCounts, inhaleBins] = hist(Bm.inhaleDurations, nBins);
     bar(inhaleBins, inhaleCounts, 'FaceColor', MY_COLORS(1,:),...
         'EdgeColor','none');
     xlabel('Inhale Durations (seconds)')
     
     % inhale pause lengths
     subplot(2,2,2)
-    [inhalePauseCounts, inhalePauseBins] = hist(Bm.inhalePauseLengths,nBins);
+    [inhalePauseCounts, inhalePauseBins] = hist(Bm.inhalePauseDurations,nBins);
     bar(inhalePauseBins, inhalePauseCounts, 'FaceColor', MY_COLORS(2,:));
     xlabel('Inhale Pause Durations (seconds)')
     
     % exhale lengths
     subplot(2,2,3)
-    [exhaleCounts, exhaleBins] = hist(Bm.exhaleLengths,nBins);
+    [exhaleCounts, exhaleBins] = hist(Bm.exhaleDurations,nBins);
     bar(exhaleBins, exhaleCounts, 'FaceColor', MY_COLORS(3,:));
     xlabel('Exhale Durations (seconds)')
     
     % exhale pause lengths
     subplot(2,2,4)
-    [exhalePauseCounts, exhalePauseBins] = hist(Bm.exhalePauseLengths, nBins);
+    [exhalePauseCounts, exhalePauseBins] = hist(Bm.exhalePauseDurations, nBins);
     bar(exhalePauseBins, exhalePauseCounts, 'FaceColor', MY_COLORS(4,:));
     xlabel('Exhale Pause Durations (seconds)')
     

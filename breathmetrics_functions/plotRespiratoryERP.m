@@ -6,7 +6,7 @@ function [fig] = plotRespiratoryERP(ERPMatrix, xAxis, simpleOrResampled)
 % 'resampled' if data is in reference to breathing rate
 
 if strcmp(simpleOrResampled,'simple')
-    TITLE_TEXT = 'Respiratory ERP before and after events';
+    TITLE_TEXT = 'Respiratory ERP';
     XLABEL_TEXT = 'Time (ms)';
     
 elseif strcmp(simpleOrResampled,'resampled')
