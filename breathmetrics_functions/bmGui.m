@@ -18,7 +18,7 @@ S.breathSelectMenuColNames={'Breath No.';'Onset';'Offset';'Status';'Note'};
 S.breathEditMenuColNames={'Inhale';'Inhale Pause';'Exhale';'Exhale Pause'};
 S.bmInit=copy(bmObj);
 
-% figure params
+% figure parameters
 myPadding=10;
 
 figureWindowWidth=1250;
@@ -156,8 +156,8 @@ axisWindowInds=[...
     plottingAxisHeight
     ];
 
-% editable text boxes that show params of breaths
-% also buttons to initialize new instances of pauses
+% editable text boxes that show params of breaths and buttons to 
+% initialize new instances of pauses
 
 breathEditTextBoxHeight=50;
 breathEditTextBoxTitleHeight=25;
@@ -169,7 +169,7 @@ onsetEditTextBoxBottom=onsetEditTextBoxTitleBottom-breathEditTextBoxHeight;
 pauseInitButtonBottom=onsetEditTextBoxBottom-buttonSize(2)-myPadding;
 pauseRemoveButtonBottom=pauseInitButtonBottom-buttonSize(2);
 
-% create buttons
+% looping to define locations for buttons
 xIter=plottingAxisX+myPadding;
 
 onsetEditTextBoxTitleInds=zeros(4,4);
@@ -223,7 +223,7 @@ S.fh = figure(...
     'resize','off');
 
 % most data is stored in S.fh.UserData
-% initialize it here
+% initialize this variable here
 
 % breath edit menu
 UserData.breathEditMat=[bmObj.inhaleOnsets;bmObj.inhalePauseOnsets;bmObj.exhaleOnsets;bmObj.exhalePauseOnsets]'/bmObj.srate;
@@ -244,7 +244,6 @@ breathInds=(1:nBreaths)';
 BMinhaleOnsets=(bmObj.inhaleOnsets/bmObj.srate)';
 BMexhaleOnsets=(bmObj.exhaleOffsets/bmObj.srate)';
 
-% keyboard
 breathSelectMat=num2cell([breathInds,BMinhaleOnsets,BMexhaleOnsets]);
 
 % statuses ('valid','edited','rejected')
@@ -281,7 +280,7 @@ UserData.newBM=[];
 set(S.fh, 'UserData', UserData);
 
 
-%%% populate figure with elements %%%
+%%% POPULATE FIGURE WITH ELEMENTS %%%
 
 %%% left side %%%
 
@@ -412,16 +411,19 @@ for i=1:4
 end
 
 
-% set call functions to include structure with all elements
+% set call functions here to include all elements of figure
 
 %%% left side %%%
 set(S.uit,'CellSelectionCallback',{@uitable_CellSelectionCallback,S})
 
+% breath navigation buttons
 set(S.prevBreathButton,'call',{@prevBreathCallback,S});
 set(S.nextBreathButton,'call',{@nextBreathCallback,S});
 
+% left side buttons
 set(S.noteButton,'call',{@noteCallback,S});
 set(S.rejectButton,'call',{@rejectBreathCallback,S});
+set(S.undoChangesButton,'call',{@undoChangesCallback,S});
 
 set(S.saveChangesButton,'call',{@saveAllChangesCallback,S});
 
@@ -432,6 +434,7 @@ set(S.phaseEditors(:),'call',{...
     @editPlotFromTextCallback,...
     S});
 
+% pause buttons
 for i=1:4
     
     % create and remove pauses
@@ -447,8 +450,6 @@ for i=1:4
             S.breathEditMenuColNames{i}});
     end
 end
-
-set(S.undoChangesButton,'call',{@undoChangesCallback,S});
 
 
 
@@ -482,14 +483,16 @@ try
 catch
     newBM=S.bmInit;
     % if figure is closed without saving.
-    disp('No changes saved.');
+    disp('No changes have been saved.');
 end
 
 end % main function
 
 %%
+
 %%% CALLBACK FUNCTIONS %%%
 
+%%
 
 %%% left side %%%
 
@@ -500,7 +503,7 @@ function uitable_CellSelectionCallback(varargin)
 eventdata=varargin{2};
 S=varargin{3};
 
-% sometimes this is called and eventdata is empty
+% sometimes this is called when eventdata is empty
 if size(eventdata.Indices,1)>0
     
     selectedRow = eventdata.Indices(1);
@@ -532,6 +535,7 @@ else
 end
 
 UserData.thisBreath=goToBreath;
+
 % overwrite changes to last breath with this breath's params
 UserData.tempPhaseOnsetChanges=UserData.breathEditMat(UserData.thisBreath,:);
 
@@ -602,6 +606,7 @@ set( S.uit,'Data',S.fh.UserData.breathSelectMat);
 % plot it with black line
 plotMeCallback({},{},S,1);
 end
+
 
 % reject selected breath
 function [] = rejectBreathCallback(varargin)
@@ -890,7 +895,7 @@ for ph=1:4
     end
 end
 
-% save it
+% save changes
 UserData.tempPhaseOnsetChanges=tempPhaseOnsetChanges;
 set( S.fh, 'UserData', UserData);
 
@@ -917,7 +922,7 @@ for ph=1:4
     end
 end
 
-% save it
+% save changes
 UserData.tempPhaseOnsetChanges=tempPhaseOnsetChanges;
 set( S.fh, 'UserData', UserData);
 
@@ -950,6 +955,8 @@ if ~isempty(thisTag)
             tagInd=4;
     end
 
+    % set temporary data at phase corresponding to the point to new x
+    % location
     UserData.tempPhaseOnsetChanges(1,tagInd)=thisXPos;
     set( S.fh, 'UserData', UserData);
 
@@ -1010,7 +1017,7 @@ if changesAreValid
 end
 end
 
-% checks that selected points are valid to save
+% checks that selected phases for this breath are valid before saving
 function [validityDecision,errorText]=checkNewVals(S,newVals)
 
 validityDecision=1;
@@ -1025,7 +1032,7 @@ exhaleOnset=newVals(3);
 exhalePauseOnset=newVals(4);
 
 
-% check that selections are valid
+% check that changes are valid
 % rules:
 % points must be within bounds of recording
 % phases must proceed in correct order (i,ip,e,ep)
@@ -1085,8 +1092,8 @@ if isInhalePause
 end
 
 % check exhale
-% lims
 
+% lims
 if isInhalePause
     exhaleMinBoundary=inhalePauseOnset;
 else
@@ -1134,6 +1141,7 @@ src=varargin{1};
 S=varargin{3};
 UserData=S.fh.UserData;
 
+% convert from time back to samples 
 inhaleOnsets=round(UserData.breathEditMat(:,1)' * UserData.bmObj.srate);
 inhalePauseOnsets=round(UserData.breathEditMat(:,2)' * UserData.bmObj.srate);
 exhaleOnsets=round(UserData.breathEditMat(:,3)' * UserData.bmObj.srate);
@@ -1141,7 +1149,6 @@ exhalePauseOnsets=round(UserData.breathEditMat(:,4)' * UserData.bmObj.srate);
 
 statuses=UserData.breathSelectMat(:,4)';
 notes=UserData.breathSelectMat(:,5)';
-
 
 answer = questdlg('Are you sure that you want to save all changes? This window will be closed and your edits will be saved into the output variable.', ...
 	'Yes', ...
@@ -1160,7 +1167,10 @@ if strcmp(answer,'Yes')
     newBM.featuresManuallyEdited=1;
     UserData.newBM=newBM;
     
+    
     set( S.fh, 'UserData', UserData);
+    
+    % setting tag to done triggers figure to save in main function.
     set( src, 'Tag', 'done');
 end
 end

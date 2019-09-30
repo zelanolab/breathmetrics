@@ -1,5 +1,5 @@
  classdef breathmetrics < matlab.mixin.Copyable
-    % Version 2.0 9/23/2019
+    % Version 2.0 9/30/2019
     %
     % Created by The Zelano Lab
     %
@@ -7,12 +7,14 @@
     % contains methods for analysis and visualization of several features
     % of respiration that can be derived. See help in individual methods for
     % details.
+    %
     % Version 1.1 created on 6/29/2018 
     %
     % IMPORTANT NOTE:
     % breathmetrics acts as a handle, meaning that if you set another
     % variable to it, changing its properties will change the properties of
-    % BOTH OBJECTS. If you want to make a copy TODO
+    % BOTH OBJECTS. If you want to make a copy use the copy function as so:
+    % newBmObj=copy(bmObj);
 
     
     % PARAMETERS
