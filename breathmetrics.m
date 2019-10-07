@@ -838,7 +838,8 @@
             rsPre=round(avgResp * Bm.srate * prePct);
             rsPost=round(avgResp * Bm.srate * postPct);
             
-            thisResp = Bm.whichResp(Bm, verbose);
+%             keyboard
+            thisResp = Bm.whichResp(verbose);
             
             if verbose
                 disp('to calculate resampled ERP');
@@ -863,10 +864,10 @@
             end
             
             Bm.resampledERPMatrix = thisResampledERPMatrix;
-            Bm.trialEvents = theseTrialEvents;
-            Bm.rejectedEvents=theseRejectedEvents;
-            Bm.trialEventInds = theseTrialEventInds;
-            Bm.rejectedEventInds=theseRejectedEventInds;
+            Bm.ERPtrialEvents = theseTrialEvents;
+            Bm.ERPrejectedEvents=theseRejectedEvents;
+            Bm.ERPtrialEventInds = theseTrialEventInds;
+            Bm.ERPrejectedEventInds=theseRejectedEventInds;
             
             Bm.resampledERPxAxis = linspace(-prePct*100, ...
                 postPct*100, resampleSize);
