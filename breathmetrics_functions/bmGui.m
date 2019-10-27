@@ -226,7 +226,19 @@ S.fh = figure(...
 % initialize this variable here
 
 % breath edit menu
-UserData.breathEditMat=[bmObj.inhaleOnsets;bmObj.inhalePauseOnsets;bmObj.exhaleOnsets;bmObj.exhalePauseOnsets]'/bmObj.srate;
+if isempty(bmObj.inhalePauseOnsets)
+    inhalePauseOnsets = NaN(size(bmObj.inhaleOnsets));
+else
+    inhalePauseOnsets = bmObj.inhalePauseOnsets;
+end
+
+if isempty(bmObj.exhalePauseOnsets)
+    exhalePauseOnsets = NaN(size(bmObj.exhaleOnsets));
+else
+    exhalePauseOnsets = bmObj.exhalePauseOnsets;
+end
+
+UserData.breathEditMat=[bmObj.inhaleOnsets;inhalePauseOnsets;bmObj.exhaleOnsets;exhalePauseOnsets]'/bmObj.srate;
 
 % breath number and n breaths
 UserData.thisBreath=1;
