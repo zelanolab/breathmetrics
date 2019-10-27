@@ -254,7 +254,7 @@ UserData.bmObj=copy(S.bmInit);
 
 breathInds=(1:nBreaths)';
 BMinhaleOnsets=(bmObj.inhaleOnsets/bmObj.srate)';
-BMexhaleOnsets=(bmObj.exhaleOnsets/bmObj.srate)';
+BMexhaleOnsets=(bmObj.exhaleOffsets/bmObj.srate)';
 
 breathSelectMat=num2cell([breathInds,BMinhaleOnsets,BMexhaleOnsets]);
 
