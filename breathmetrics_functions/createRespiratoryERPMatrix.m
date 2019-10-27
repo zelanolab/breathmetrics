@@ -78,6 +78,5 @@ if ~exist('ERPMatrix','var')
     if verbose
         disp('No valid events were found. Returning empty array');
     end
-    ERPMatrix = zeros(1,length(-preSamples:postSamples));
-    ERPMatrix(:)=nan;
+    ERPMatrix = [];
 end
