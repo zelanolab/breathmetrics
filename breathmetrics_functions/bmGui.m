@@ -226,15 +226,15 @@ S.fh = figure(...
 % initialize this variable here
 
 % breath edit menu
-if isempty(bmObj.inhalePauseOnsets)
-    inhalePauseOnsets = NaN(size(bmObj.inhaleOnsets));
-else
-    inhalePauseOnsets = bmObj.inhalePauseOnsets;
-end
 
-if isempty(bmObj.exhalePauseOnsets)
+% if data type is breathing belt there are no pauses
+% check for this here and insert nans as placeholders
+
+if strcmp(bmObj.dataType,'humanBB')
+    inhalePauseOnsets = NaN(size(bmObj.inhaleOnsets));
     exhalePauseOnsets = NaN(size(bmObj.exhaleOnsets));
 else
+    inhalePauseOnsets = bmObj.inhalePauseOnsets;
     exhalePauseOnsets = bmObj.exhalePauseOnsets;
 end
 
