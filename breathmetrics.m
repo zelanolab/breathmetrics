@@ -48,6 +48,9 @@
         inhaleOffsets
         exhaleOffsets
         
+        inhaleTimeToPeak
+        exhaleTimeToTrough
+        
         inhaleVolumes
         exhaleVolumes
         
@@ -404,7 +407,19 @@
             Bm.inhalePauseOnsets = theseInhalePauseOnsets;
             Bm.exhalePauseOnsets = theseExhalePauseOnsets;
             
+            
+            % and calculate time to peak
+            timeToPeaks=(Bm.inhalePeaks-Bm.inhaleOnsets)/Bm.srate;
+            
+            % sometimes no trough of exhale at last breath
+            nTroughs=length(Bm.exhaleTroughs);
+            timeToTroughs=(Bm.exhaleTroughs(1:nTroughs)-Bm.exhaleOnsets(1:nTroughs))/Bm.srate;
+            
+            Bm.inhaleTimeToPeak=timeToPeaks;
+            Bm.exhaleTimeToTrough=timeToTroughs;
+            
         end
+        
         
         function Bm = findInhaleAndExhaleOffsets(Bm, verbose )
             % finds the end of each inhale, exhale, inhale pause, and
