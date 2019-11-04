@@ -253,10 +253,22 @@ UserData.bmObj=copy(S.bmInit);
 % params for breath select menu
 
 breathInds=(1:nBreaths)';
-BMinhaleOnsets=(bmObj.inhaleOnsets/bmObj.srate)';
-BMexhaleOnsets=(bmObj.exhaleOffsets/bmObj.srate)';
 
-breathSelectMat=num2cell([breathInds,BMinhaleOnsets,BMexhaleOnsets]);
+% breathing belts don't have offsets
+if strcmp(bmObj.dataType,'humanBB')
+    
+    % not true offsets, use exhale offset as placeholder
+    BMinhaleOnsets=(bmObj.inhaleOnsets/bmObj.srate)';
+    BMexhaleOffsets=(bmObj.exhaleOnsets/bmObj.srate)';
+    
+else
+
+    BMinhaleOnsets=(bmObj.inhaleOnsets/bmObj.srate)';
+    BMexhaleOffsets=(bmObj.exhaleOffsets/bmObj.srate)';
+
+end
+
+breathSelectMat=num2cell([breathInds,BMinhaleOnsets,BMexhaleOffsets]);
 
 % statuses ('valid','edited','rejected')
 if isempty(bmObj.statuses)
