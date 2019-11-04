@@ -14,7 +14,15 @@ function newBM = bmGui(bmObj)
 %%% initialize static parameters %%%
 
 S.myColors=parula(5);
-S.breathSelectMenuColNames={'Breath No.';'Onset';'Offset';'Status';'Note'};
+
+if strcmp(bmObj.dataType,'humanBB')
+    breathSelectMenuColNames={'Breath No.';'Inhale';'Exhale';'Status';'Note'};
+else
+    breathSelectMenuColNames={'Breath No.';'Onset';'Offset';'Status';'Note'};
+end
+
+S.breathSelectMenuColNames=breathSelectMenuColNames;
+
 S.breathEditMenuColNames={'Inhale';'Inhale Pause';'Exhale';'Exhale Pause'};
 S.bmInit=copy(bmObj);
 
