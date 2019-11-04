@@ -360,8 +360,16 @@
             % decreases demarcates an exhale. This is unlike zero-crosses 
             % which demarcate breath onsets in airflow recordings.
             if strcmp(Bm.dataType,'humanBB')
+                
+                % make sure inhale happens before exhale
+                if putativeTroughs(1)>putativePeaks(1)
+                    putativePeaks=putativePeaks(2:end);
+                    putativeTroughs=putativeTroughs(1:end-1);
+                end
+                    
                 Bm.inhaleOnsets = putativeTroughs;
                 Bm.exhaleOnsets = putativePeaks;
+
             
             % In rodent thermocouple recordings, the peaks and troughs 
             % represent inhale and exhale onsets, respectively. Inhales
@@ -530,8 +538,8 @@
                 'exhalePauseDurations';'secondaryFeatures'};
             
             otherSignalCompleteFeatureSet={
-                'baselineCorrectedRespiration';'inhalePeaks';
-                'exhaleTroughs';'secondaryFeatures'};
+                'baselineCorrectedRespiration';'inhaleOnsets';
+                'exhaleOnsets';'secondaryFeatures'};
             
             if strcmp(Bm.dataType,'humanAirflow') || ...
                     strcmp(Bm.dataType,'rodentAirflow')
