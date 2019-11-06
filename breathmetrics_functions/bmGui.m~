@@ -231,8 +231,6 @@ S.fh = figure(...
     'resize','off', ...
     'KeyPressFcn', @keyPress);
 
-movegui(S.fh,'center')
-
 % most data is stored in S.fh.UserData
 % initialize this variable here
 
@@ -319,15 +317,9 @@ set(S.fh, 'UserData', UserData);
 function keyPress(src, e)
     switch e.Key
         case 'leftarrow'
-            prevBreathCallback(src, e, S);
-        case 'rightarrow'
-            nextBreathCallback(src, e, S);
-        case 'u'
-            undoChangesCallback(src, e, S);
-        case 'r'
-            rejectBreathCallback(src, e, S);
-        case 'n'
-            noteCallback(src, e, S);
+            prevBreathCallback(src,e,S);
+               case 'leftarrow'
+            prevBreathCallback(src,e,S);
     end
 end
 
