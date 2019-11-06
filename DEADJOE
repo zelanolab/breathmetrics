@@ -1,0 +1,29 @@
+
+*** These modified files were found in JOE when it aborted on Wed Nov  6 18:43:29 2019
+*** JOE was aborted because the terminal closed
+
+*** File '(Unnamed)'
+/data/pt_02099/code/resp_analysis/breathmetrics/.git/COMMIT_EDITMSG
+
+*** File '/data/pt_02099/code/resp_analysis/breathmetrics/.git/COMMIT_EDITMSG'
+listen for keypresses (shortcuts) & center gui
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Date:      Wed Nov 6 18:40:25 2019 +0100
+# Committer: Marc Pabst <mapabst@donau.cbs.mpg.de>
+#
+# On branch master
+# Your branch is up-to-date with 'origin/master'.
+#
+# Changes to be committed:
+#	modified:   breathmetrics_functions/bmGui.m
+#	new file:   breathmetrics_functions/bmGui.m~
+#
+
+*** File '* Startup Log *'
+Processing '/etc/joe/editorrc'...
+Processing '/etc/joe/ftyperc'...
+Finished processing /etc/joe/ftyperc
+Finished processing /etc/joe/editorrc
