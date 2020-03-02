@@ -55,12 +55,21 @@ for thisEvent = 1:length(eventArray)
             thisEventERP(:)=nan;
             validInds = ~((eventWindow<1) | any(eventWindow>size(resp,2)));
             thisEventERP(1,validInds)=resp(1,eventWindow(validInds));
-            trialEvents=[trialEvents,eventArray(thisEvent)];
-            trialEventInds=[trialEventInds,thisEvent];
             
-            ERPMatrix(ERPiter,:)=thisEventERP;
+            if all(isnan(thisEventERP))
+                rejectedEvents=[rejectedEvents,eventArray(thisEvent)];
+                rejectedEventInds = [rejectedEventInds,thisEvent];
+                if verbose
+                    fprintf('Event #%i (%i) is outside of ERP range \n', ...
+                        thisEvent, eventArray(thisEvent));
+                end
+            else
+                trialEvents=[trialEvents,eventArray(thisEvent)];
+                trialEventInds=[trialEventInds,thisEvent];
+                ERPMatrix(ERPiter,:)=thisEventERP;
+                ERPiter=ERPiter+1;
+            end
             
-            ERPiter=ERPiter+1;
         end
         
     else

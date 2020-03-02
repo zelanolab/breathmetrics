@@ -671,14 +671,15 @@
             if nargin < 4
                 verbose=1;
             end
+            
             if nargin < 3
                 rateEstimation = 'featureDerived';
             end
             
-            thisResp = Bm.whichResp(Bm, verbose);
-            
+            thisResp = Bm.whichResp(verbose);
+
             if verbose
-                disp('to find extrema');
+                disp('to calculate phase');
             end
             
             if strcmp(rateEstimation,'featureDerived')
@@ -726,7 +727,7 @@
         %%% Event Related Potential (ERP) methods %%%
         
         function Bm = calculateERP( Bm, eventArray , pre, post, ...
-                appendNaNs,verbose)
+                appendNaNs,erpType,verbose)
             % Calculates an event related potential (ERP) of the 
             % respiratory trace 'pre' and 'post' milliseconds before and 
             % after time indices in eventArray, excluding events where a 
@@ -748,12 +749,25 @@
             if nargin<5
                 appendNaNs=0;
             end
+            
             if nargin<6
+                erpType='normal';
+            end
+                
+            if nargin<7
                 verbose=0;
             end
             
-            thisResp = Bm.whichResp( verbose);
             
+            if strcmp(erpType,'normal')
+                thisResp = Bm.whichResp( verbose);
+            elseif strcmp(erpType,'phase')
+                thisResp = Bm.respiratoryPhase;
+                if verbose
+                    disp('using respiratory phase');
+                end
+            end
+                
             if verbose
                 disp('to calculate ERP');
             end
