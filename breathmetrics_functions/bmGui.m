@@ -228,7 +228,10 @@ S.fh = figure(...
     'menubar','none',...
     'name','BreathMetrics GUI',...
     'numbertitle','off',...
-    'resize','off');
+    'resize','off', ...
+    'KeyPressFcn', @keyPress);
+
+movegui(S.fh,'center')
 
 % most data is stored in S.fh.UserData
 % initialize this variable here
@@ -311,6 +314,22 @@ UserData.newBM=[];
 % save bm params into fh.UserData
 set(S.fh, 'UserData', UserData);
 
+%%% LISTEN FOR KEYPRESSES %%%
+
+function keyPress(src, e)
+    switch e.Key
+        case 'leftarrow'
+            prevBreathCallback(src, e, S);
+        case 'rightarrow'
+            nextBreathCallback(src, e, S);
+        case 'u'
+            undoChangesCallback(src, e, S);
+        case 'r'
+            rejectBreathCallback(src, e, S);
+        case 'n'
+            noteCallback(src, e, S);
+    end
+end
 
 %%% POPULATE FIGURE WITH ELEMENTS %%%
 
