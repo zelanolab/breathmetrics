@@ -303,14 +303,19 @@
         
         %%% Feature Extraction Methods %%%
         
-        function Bm = findExtrema(Bm, verbose)
+        function Bm = findExtrema(Bm, simplify, verbose)
             % Estimate peaks and troughs in respiratory data.
             % PARAMETERS
             % bm : BreathMetrics object
+            % simplify: 0 (default) or 1 : if zero nInhales=nExhales
+            % (discards final inhale if there is no subsequent exhale)
             % verbose : 0 (default) or 1 : displays each step of this
             % function
             
             if nargin < 2
+                simplify = 0;
+            end
+            if nargin < 3
                 verbose = 0;
             end
             
@@ -329,7 +334,6 @@
                 [putativePeaks, putativeTroughs] = ...
                     findRespiratoryExtrema( thisResp, Bm.srate );
                 
-                
             % same extrema finding for thermocouple and airflow recordings
             % in rodents
             elseif strfind(Bm.dataType, 'rodent')==1
@@ -340,6 +344,11 @@
                 [putativePeaks, putativeTroughs] = ...
                     findRespiratoryExtrema( thisResp, Bm.srate, ...
                     0, rodentSWSizes );
+            end
+            
+            % set nPeaks to nTroughs
+            if simplify
+                putativePeaks=putativePeaks(1:length(putativeTroughs));
             end
             
             % The extrema represent the peak flow rates of inhales and 
@@ -569,7 +578,7 @@
         end
             
         function Bm = estimateAllFeatures( Bm, zScore, ...
-                baselineCorrectionMethod, verbose )
+                baselineCorrectionMethod, simplify, verbose )
             % Calls methods above to estimate all features of respiration 
             % that can be calculated for this data type.
             
@@ -579,9 +588,16 @@
             %    remove acute drifts in signal baseline.
             %    'simple' : subtracts the mean from the signal. Much faster
             %    but does not remove acute shifts in signal baseline.
+            %
             % zScore : 0 (default) or 1 | computes the z-score for  
             %          respiratory amplitudes to normalize for comparison  
             %          between subjects.
+            %
+            % simplify: 0 (default) or 1 | if set to 1 nInhales = nExhales
+            %           params of final exhales sometimes can't be computed
+            %           this function discards the final inhale to keep
+            %           nInhales and nExhales the same.
+            %
             % verbose : 0  or 1 (default) | displays each step of every
             %          embedded function called by this one
             
@@ -592,6 +608,9 @@
                 baselineCorrectionMethod = 'sliding';
             end
             if nargin < 4
+                simplify = 0;
+            end
+            if nargin < 5
                 verbose = 1;
             end
             
@@ -600,7 +619,7 @@
                 
                 Bm.correctRespirationToBaseline(baselineCorrectionMethod, ...
                     zScore, verbose);
-                Bm.findExtrema(verbose);
+                Bm.findExtrema(simplify, verbose);
                 Bm.findOnsetsAndPauses(verbose);
                 Bm.findInhaleAndExhaleOffsets(verbose);
                 Bm.findBreathAndPauseDurations();
@@ -613,7 +632,7 @@
                 % thermocouple recordings.
                 Bm.correctRespirationToBaseline(...
                     baselineCorrectionMethod, zScore, verbose);
-                Bm.findExtrema(verbose);
+                Bm.findExtrema(simplify, verbose);
                 Bm.getSecondaryFeatures(verbose);
             end
             Bm = Bm.checkFeatureEstimations();

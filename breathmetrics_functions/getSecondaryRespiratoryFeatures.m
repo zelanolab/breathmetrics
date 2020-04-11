@@ -11,20 +11,33 @@ if verbose == 1
     disp('Calculating secondary respiratory features')
 end
 
+
+
+
 % first find valid breaths
-nBreaths=length(Bm.inhaleOnsets);
+
+% edited 4/11/20
+% split nBreaths into inhales and exhales to fix indexing error from 
+% myPeak error in findRespiratoryExtrema
+    
+nInhales=length(Bm.inhaleOnsets);
+nExhales=length(Bm.exhaleOnsets);
 if isempty(Bm.statuses)
-    validBreathInds=1:nBreaths;
+    validInhaleInds=1:nInhales;
+    validExhaleInds=1:nExhales;
 else
+    
     IndexInvalid = strfind(Bm.statuses,'rejected');
     invalidBreathInds = find(not(cellfun('isempty',IndexInvalid)));
-    validBreathInds=setdiff(1:nBreaths,invalidBreathInds);
-    if isempty(validBreathInds)
+    validInhaleInds=setdiff(1:nInhales,invalidBreathInds);
+    validExhaleInds=setdiff(1:nExhales,invalidBreathInds);
+    if isempty(validInhaleInds)
         warndlg('No valid breaths found. If the status of a breath is set to ''rejected'', it will not be used to compute secondary features');
     end
 end
 
-nValidBreaths=length(validBreathInds);
+nValidInhales=length(validInhaleInds);
+nValidExhales=length(validExhaleInds);
 
 %%% Breathing Rate %%%
 % breathing rate is the sampling rate over the average number of samples 
@@ -33,9 +46,9 @@ nValidBreaths=length(validBreathInds);
 % this is tricky when certain breaths have been rejected
 breathDiffs=nan(1,1);
 vbIter=1;
-for i = 1:nValidBreaths-1
-    thisBreath=validBreathInds(i);
-    nextBreath=validBreathInds(i+1);
+for i = 1:nValidInhales-1
+    thisBreath=validInhaleInds(i);
+    nextBreath=validInhaleInds(i+1);
     % if there is no rejected breath between these breaths, they can be
     % used to compute breathing rate.
     if nextBreath == thisBreath+1
@@ -61,22 +74,22 @@ if strcmp(Bm.dataType,'humanAirflow') || strcmp(Bm.dataType,'rodentAirflow')
     % the maximum rate of airflow at each inhale and exhale
     
     % inhales
-    validInhaleFlows=excludeOutliers(Bm.peakInspiratoryFlows, validBreathInds);
+    validInhaleFlows=excludeOutliers(Bm.peakInspiratoryFlows, validInhaleInds);
     avgMaxInhaleFlow = mean(validInhaleFlows);
     
     % exhales
-    validExhaleFlows=excludeOutliers(Bm.troughExpiratoryFlows, validBreathInds);
+    validExhaleFlows=excludeOutliers(Bm.troughExpiratoryFlows, validExhaleInds);
     avgMaxExhaleFlow = mean(validExhaleFlows);
 
     %%% Breath Volumes %%%
     % the volume of each breath is the integral of the airflow
     
     % inhales
-    validInhaleVolumes=excludeOutliers(Bm.inhaleVolumes, validBreathInds);
+    validInhaleVolumes=excludeOutliers(Bm.inhaleVolumes, validInhaleInds);
     avgInhaleVolume = mean(validInhaleVolumes);
     
     % exhales
-    validExhaleVolumes=excludeOutliers(Bm.exhaleVolumes, validBreathInds);
+    validExhaleVolumes=excludeOutliers(Bm.exhaleVolumes, validExhaleInds);
     avgExhaleVolume = mean(validExhaleVolumes);
 
     %%% Tidal volume %%%
@@ -97,11 +110,11 @@ if strcmp(Bm.dataType,'humanAirflow') || strcmp(Bm.dataType,'rodentAirflow')
     
     % because pauses don't necessarily occur on every breath, multiply this
     % value by total number that occured.
-    pctInhalePause=sum(~isnan(Bm.inhalePauseDurations))/nValidBreaths;
-    avgInhalePauseDuration = nanmean(Bm.inhalePauseDurations(validBreathInds)) * pctInhalePause;
+    pctInhalePause=sum(~isnan(Bm.inhalePauseDurations))/nValidInhales;
+    avgInhalePauseDuration = nanmean(Bm.inhalePauseDurations(validInhaleInds)) * pctInhalePause;
     
-    pctExhalePause=sum(~isnan(Bm.exhalePauseDurations))/nValidBreaths;
-    avgExhalePauseDuration = nanmean(Bm.exhalePauseDurations(validBreathInds)) * pctExhalePause;
+    pctExhalePause=sum(~isnan(Bm.exhalePauseDurations))/nValidExhales;
+    avgExhalePauseDuration = nanmean(Bm.exhalePauseDurations(validExhaleInds)) * pctExhalePause;
 
     inhaleDutyCycle = avgInhaleDuration / interBreathInterval;
     inhalePauseDutyCycle = avgInhalePauseDuration / interBreathInterval;
@@ -226,9 +239,14 @@ end
 end
 
 function validVals=excludeOutliers(origVals,validBreathInds)
-% rejects values exceeding 2 stds from the mean
+    
+    % rejects values exceeding 2 stds from the mean
+    
     upperBound=nanmean(origVals) + 2 * nanstd(origVals);
     lowerBound=nanmean(origVals) - 2 * nanstd(origVals);
+    
     validValInds = find(origVals(origVals > lowerBound & origVals < upperBound));
+    
     validVals = origVals(intersect(validValInds, validBreathInds));
+    
 end

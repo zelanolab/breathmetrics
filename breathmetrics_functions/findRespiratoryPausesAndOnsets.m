@@ -15,12 +15,12 @@ function [ inhaleOnsets, exhaleOnsets, inhalePauseOnsets, ...
 
 % Assume that there is exactly one onset per breath
 inhaleOnsets = zeros(1, length(myPeaks));
-exhaleOnsets = zeros(1, length(myPeaks));
+exhaleOnsets = zeros(1, length(myTroughs)); % changed on 4/11/20
 
 % inhale pause onsets happen after inhales but before exhales
 % exhale pause onsets happen after exhales but before inhales 
 inhalePauseOnsets = zeros(1,length(myPeaks));
-exhalePauseOnsets = zeros(1,length(myPeaks));
+exhalePauseOnsets = zeros(1,length(myTroughs)); % changed on 4/11/20
 inhalePauseOnsets(:)=nan;
 exhalePauseOnsets(:)=nan;
 
