@@ -153,8 +153,20 @@ ylabel('Respiratory Flow');
 % After you've initialized a breathmetrics object, execute the following 
 % line of code and breathmetrics will automatically calculate all of the 
 % features that it can in your data.
-bmObj.estimateAllFeatures(verbose);
+bmObj.estimateAllFeatures;
 
+
+% this can also be called along with the following arguments:
+
+% bmObj.estimateAllFeatures(zScore, baselineCorrectionMethod, ...
+%     simplify, verbose);
+
+% zScore: 0 (default) or 1 : z-scores the amplitude of the respiratory
+%   recording. Helpful for comparing inter-subject comparisons
+% baselineCorrectionMethod 'sliding' (default) or 'simple' : use baseline 
+%   correction method in section above 
+% simplify 0 (default) or 1: sets nInhales equal to nExhales
+% verbose: 0 (default) or 1: prints output of inner functions
 
 %% 5: Automatically extract individual respiratory features
 
@@ -177,11 +189,20 @@ bmObj.estimateAllFeatures(verbose);
 
 %% 5.1 Finding peaks and troughs
 
-bmObj.findExtrema(verbose);
+simplify=0;
+
+bmObj.findExtrema(simplify, verbose);
 % points where peaks and troughs occur can be accessed at bm.inhalePeaks
 % and bm.exhale_troughs, respectively.
 % similarly, the peak inspiratory and expiratory flow can be accessed at 
 % bm.peakInspiratoryFlows and bm.troughExpiratoryFlows
+
+% simplify sets the number of inhales to the number of exhales.
+% The reason for this is that sometimes the features of the final exhale
+% cannot be parameterized, leaving mismatched numbers of inhales and
+% exhales
+% setting simplify to 1 discards the final inhale so that the numbers are
+% the same.
 
 nPlot=10;
 % points where the first nPlot inhale peaks occur
