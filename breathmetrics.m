@@ -896,7 +896,6 @@
             rsPre=round(avgResp * Bm.srate * prePct);
             rsPost=round(avgResp * Bm.srate * postPct);
             
-%             keyboard
             thisResp = Bm.whichResp(verbose);
             
             if verbose
