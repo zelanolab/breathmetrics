@@ -313,7 +313,7 @@
             % function
             
             if nargin < 2
-                simplify = 0;
+                simplify = 1;
             end
             if nargin < 3
                 verbose = 0;
@@ -608,7 +608,7 @@
                 baselineCorrectionMethod = 'sliding';
             end
             if nargin < 4
-                simplify = 0;
+                simplify = 1;
             end
             if nargin < 5
                 verbose = 1;
