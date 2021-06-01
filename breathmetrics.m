@@ -593,7 +593,7 @@
             %          respiratory amplitudes to normalize for comparison  
             %          between subjects.
             %
-            % simplify: 0 (default) or 1 | if set to 1 nInhales = nExhales
+            % simplify: 0 or 1  (default)| if set to 1 nInhales = nExhales
             %           params of final exhales sometimes can't be computed
             %           this function discards the final inhale to keep
             %           nInhales and nExhales the same.

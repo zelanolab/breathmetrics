@@ -165,7 +165,8 @@ bmObj.estimateAllFeatures;
 %   recording. Helpful for comparing inter-subject comparisons
 % baselineCorrectionMethod 'sliding' (default) or 'simple' : use baseline 
 %   correction method in section above 
-% simplify 0 (default) or 1: sets nInhales equal to nExhales
+% simplify 0 or 1 (default): sets nInhales equal to nExhales. You must have
+% equal nInhales and nExhales to use the GUI.
 % verbose: 0 (default) or 1: prints output of inner functions
 
 %% 5: Automatically extract individual respiratory features
@@ -189,7 +190,7 @@ bmObj.estimateAllFeatures;
 
 %% 5.1 Finding peaks and troughs
 
-simplify=0;
+simplify=1;
 
 bmObj.findExtrema(simplify, verbose);
 % points where peaks and troughs occur can be accessed at bm.inhalePeaks
@@ -202,7 +203,7 @@ bmObj.findExtrema(simplify, verbose);
 % cannot be parameterized, leaving mismatched numbers of inhales and
 % exhales
 % setting simplify to 1 discards the final inhale so that the numbers are
-% the same.
+% the same. This is needed to use the GUI
 
 nPlot=10;
 % points where the first nPlot inhale peaks occur
