@@ -33,7 +33,7 @@ Breathmetrics is a matlab class with functions that serve 3 purposes:
 
 ## Installation
 To use this toolbox, simply download or clone this repository and append it to your Matlab path. 
-(see Matlab's pathtool function for help).
+(see Matlab's pathtool function for help). Make sure to add the breathmetrics_functions subfolder to your path as well.
 If you have an older version of breathmetrics installed, make sure that you remove it from your path. The safest option is to just delete it. 
 Type 'which breathmetrics' to make sure that you are using the current version.
 
