@@ -245,7 +245,7 @@ function validVals=excludeOutliers(origVals,validBreathInds)
     upperBound=nanmean(origVals) + 2 * nanstd(origVals);
     lowerBound=nanmean(origVals) - 2 * nanstd(origVals);
     
-    validValInds = find(origVals(origVals > lowerBound & origVals < upperBound));
+    validValInds = find(origVals > lowerBound & origVals < upperBound);
     
     validVals = origVals(intersect(validValInds, validBreathInds));
     
