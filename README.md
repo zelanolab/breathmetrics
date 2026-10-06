@@ -92,6 +92,28 @@ Only the instantaneus phase estimation function (which is not recommended) is de
 ## Reference
 A PDF of the peer-reviewed paper validating the methods we use here can be found in this directory (NotoBreathmetricsChemicalSenses2018.pdf).
 
+## Alternative segmentation for difficult recordings (ZLP engine)
+
+For amplitude-non-stationary recordings (drifting baselines, breathing depth
+that changes several-fold between task blocks, paced or very slow breathing,
+belt/pressure/cannula sensors) where the stock extrema and inhale-onset
+detection struggle, the toolbox now ships an alternative segmentation front
+end contributed by the Zelano Lab preprocessing pipeline:
+
+```matlab
+[bm, rawVolumes] = zlpEstimateAllFeatures(resp, srate);
+```
+
+is a drop-in alternative to `bm.estimateAllFeatures()`: breath landmarks come
+from a validity-ruled extrema detector plus a slope-walk inhale-onset
+algorithm (`prepBreathTrace_zlp`, `findInhaleOnsets_zlp`), and every
+downstream feature is still computed by the unmodified breathmetrics class
+via its manual-adjustment path. The optional second output adds breath
+volumes integrated on the raw-unit trace (the detection normalization that
+makes segmentation robust makes the object's own volumes incomparable across
+epochs of differing breathing depth). Full algorithm specification,
+motivation, units and caveats: [docs/zlp_segmentation.md](docs/zlp_segmentation.md).
+
 If you would like to use this code in your project, please cite:
 
     Noto, T., Zhou, G., Schuele, S., Templer, J., & Zelano, C. (2018). 

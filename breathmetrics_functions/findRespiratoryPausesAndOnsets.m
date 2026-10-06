@@ -105,7 +105,17 @@ for THIS_BREATH = 1:length(myPeaks)-1
        
        % find last point in half-cycle below threshold
        INHALE_ONSET = find( POSSIBLE_INHALE_INDS == 0, 1, 'last' );
-       
+
+       % on signals with baseline drift or a large DC offset the whole
+       % trough-to-peak window can sit above the GLOBAL mean, leaving no
+       % below-threshold sample; fall back to the window minimum - the
+       % closest analogue of the last-below-baseline point when the
+       % baseline is never crossed. (Same guard the head/tail special
+       % cases already have; without it the assignment below errors.)
+       if isempty(INHALE_ONSET)
+           [~, INHALE_ONSET] = min(INHALE_WINDOW);
+       end
+
        % this is the inhale onset for the next peak so add 1 to keep indexing
        % consistant
        exhalePauseOnsets(1, THIS_BREATH) = nan;
@@ -167,7 +177,14 @@ for THIS_BREATH = 1:length(myPeaks)-1
        % find last point in half-cycle below threshold
        EXHALE_ONSET = find( POSSIBLE_EXHALE_INDS == 1, 1, 'last' );
        % this is the exhale onset for the next trough
-       
+
+       % mirror of the inhale guard above: a peak-to-trough window that
+       % sits entirely below the GLOBAL mean has no above-threshold
+       % sample; fall back to the window maximum.
+       if isempty(EXHALE_ONSET)
+           [~, EXHALE_ONSET] = max(EXHALE_WINDOW);
+       end
+
        inhalePauseOnsets(1, THIS_BREATH) = nan;
        exhaleOnsets(1, THIS_BREATH) = myPeaks( THIS_BREATH ) + EXHALE_ONSET;
     else
